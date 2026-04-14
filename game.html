@@ -4,550 +4,412 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VALDRIS — Tablero Virtual</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Crimson+Pro:wght@300;400&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#080810;--bg2:#0e0e1a;--bg3:#13131f;
-  --gold:#c9a84c;--gold-l:#e8c97a;
-  --text:#e8e4d9;--muted:#8a8070;
-  --vael:#7F77DD;--drath:#D85A30;--eth:#1D9E75;--ur:#BA7517;
-  --border:rgba(201,168,76,0.2);
-  --danger:#E24B4A;
-}
+:root{--bg:#080810;--bg2:#0e0e1a;--bg3:#13131f;--gold:#c9a84c;--gold-l:#e8c97a;--text:#e8e4d9;--muted:#8a8070;--vael:#7F77DD;--drath:#D85A30;--eth:#1D9E75;--ur:#BA7517;--border:rgba(201,168,76,0.2);--danger:#E24B4A;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;display:grid;grid-template-rows:auto 1fr auto;height:100vh;overflow:hidden;}
-
-/* TOP BAR */
-.topbar{background:rgba(8,8,16,0.98);border-bottom:1px solid var(--border);padding:0.5rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;z-index:100;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:rgba(8,8,16,0.98);border-bottom:1px solid var(--border);padding:0.5rem 1rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;flex-shrink:0;}
 .game-title{font-family:'Cinzel Decorative',serif;font-size:1rem;color:var(--gold);}
-.turn-info{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.2em;color:var(--muted);}
-.turn-info span{color:var(--gold);}
-.phase-badge{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.2em;padding:0.3rem 0.8rem;border:1px solid var(--gold);color:var(--gold);text-transform:uppercase;}
-.back-btn{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;padding:0.3rem 0.8rem;border:1px solid var(--border);color:var(--muted);cursor:pointer;text-decoration:none;text-transform:uppercase;transition:all 0.2s;}
+.turn-badge{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.15em;padding:0.3rem 0.8rem;border:1px solid currentColor;text-transform:uppercase;}
+.back-btn{font-family:'Cinzel',serif;font-size:0.65rem;padding:0.3rem 0.8rem;border:1px solid var(--border);color:var(--muted);cursor:pointer;text-decoration:none;text-transform:uppercase;margin-left:auto;}
 .back-btn:hover{border-color:var(--gold);color:var(--gold);}
-
-/* MAIN LAYOUT */
-.game-layout{display:grid;grid-template-columns:220px 1fr 220px;overflow:hidden;height:100%;}
-
-/* SIDE PANELS */
-.side-panel{background:var(--bg2);border-right:1px solid var(--border);padding:0.75rem;overflow-y:auto;display:flex;flex-direction:column;gap:0.75rem;}
-.side-panel.right{border-right:none;border-left:1px solid var(--border);}
-.panel-title{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.3em;color:var(--muted);text-transform:uppercase;padding-bottom:0.5rem;border-bottom:1px solid var(--border);}
-
-/* KINGDOM STATUS */
-.k-status{border:1px solid var(--border);padding:0.75rem;background:rgba(255,255,255,0.02);}
-.k-status.active-turn{border-color:var(--kc);}
-.k-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;}
-.k-name-sm{font-family:'Cinzel',serif;font-size:0.8rem;color:var(--kc);}
-.k-indicator{width:8px;height:8px;border-radius:50%;background:var(--kc);}
-.k-resources{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;}
-.res-item{background:rgba(255,255,255,0.04);padding:0.4rem;text-align:center;}
-.res-val{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);}
-.res-key{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;}
-.hp-bar-wrap{margin-top:0.5rem;}
-.hp-label{font-size:0.65rem;color:var(--muted);margin-bottom:0.2rem;display:flex;justify-content:space-between;}
-.hp-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
-.hp-fill{height:100%;background:var(--kc);border-radius:2px;transition:width 0.4s;}
-
-/* BOARD CENTER */
-.board-center{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--bg);}
-
-/* BOARD GRID */
-#gameBoard{position:relative;}
-.board-cell{position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;transition:all 0.2s;border:1px solid rgba(201,168,76,0.08);}
-.board-cell:hover{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.05);}
-.board-cell.selected{border-color:var(--gold);background:rgba(201,168,76,0.1);}
-.board-cell.reachable{border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04);animation:pulse-cell 1s infinite;}
-.board-cell.castle{border-width:2px;}
-.board-cell.mine{border-color:rgba(29,158,117,0.4);}
-.board-cell.trap{border-color:rgba(232,76,74,0.2);}
-.board-cell.boss{border-color:rgba(232,76,74,0.5);background:rgba(232,76,74,0.05);}
-.board-cell.grial{border-color:var(--gold);background:rgba(201,168,76,0.1);animation:pulse-gold 2s infinite;}
-@keyframes pulse-cell{0%,100%{background:rgba(255,255,255,0.02);}50%{background:rgba(255,255,255,0.08);}}
-@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.3);}50%{box-shadow:0 0 12px 4px rgba(201,168,76,0.15);}}
-
-.cell-unit{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;position:relative;}
-.cell-label{position:absolute;bottom:1px;right:2px;font-size:0.5rem;color:var(--muted);font-family:'Cinzel',serif;}
-
-/* ACTION PANEL */
-.action-panel{background:var(--bg3);border-top:1px solid var(--border);padding:0.75rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
-.action-btn{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.15em;padding:0.5rem 1rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
-.action-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
-.action-btn:disabled{opacity:0.3;cursor:not-allowed;}
-.action-btn.primary{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08);}
-.action-btn.danger{border-color:var(--danger);color:var(--danger);}
-.log-area{flex:1;min-width:200px;}
-.log-text{font-size:0.8rem;color:var(--muted);font-style:italic;}
-.log-text span{color:var(--gold-l);}
-
-/* RIGHT PANEL extras */
-.mini-card{border:1px solid var(--border);padding:0.6rem;background:rgba(255,255,255,0.02);margin-bottom:0.5rem;}
-.mc-title{font-family:'Cinzel',serif;font-size:0.7rem;color:var(--gold);margin-bottom:0.4rem;}
-.mc-body{font-size:0.75rem;color:var(--muted);line-height:1.5;}
-.mc-stats{display:flex;gap:0.5rem;margin-top:0.4rem;flex-wrap:wrap;}
-.mc-stat{font-size:0.65rem;font-family:'Cinzel',serif;color:var(--text);}
-.mc-stat em{color:var(--gold);}
-
-/* DICE UI */
-.dice-ui{display:flex;gap:0.5rem;align-items:center;}
-.mini-die{width:36px;height:36px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:1rem;color:var(--gold);cursor:pointer;transition:all 0.2s;user-select:none;}
-.mini-die:hover{border-color:var(--gold);background:rgba(201,168,76,0.1);}
-.mini-die.rolling{animation:spin 0.4s ease-out;}
-@keyframes spin{0%{transform:rotate(0) scale(1.2);}100%{transform:rotate(360deg) scale(1);}}
-.die-result{font-family:'Cinzel',serif;font-size:0.75rem;color:var(--muted);}
-.die-result span{color:var(--gold-l);font-family:'Cinzel Decorative',serif;font-size:1rem;}
-
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;}
-.modal-overlay.show{display:flex;}
-.modal{background:var(--bg2);border:1px solid var(--border);padding:2rem;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;}
-.modal h3{font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--gold);margin-bottom:1rem;}
-.modal p{font-size:0.9rem;line-height:1.7;color:var(--muted);margin-bottom:1rem;}
-.modal-btns{display:flex;gap:0.5rem;flex-wrap:wrap;}
-.modal-btn{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.15em;padding:0.5rem 1.2rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
-.modal-btn:hover{border-color:var(--gold);color:var(--gold);}
-.modal-btn.ok{border-color:var(--gold);color:var(--gold);}
-
-@media(max-width:700px){
-  .game-layout{grid-template-columns:1fr;}
-  .side-panel{display:none;}
-}
+.instr{font-size:0.78rem;color:var(--gold-l);font-style:italic;flex:1;text-align:center;min-width:200px;}
+.main{display:flex;flex:1;overflow:hidden;}
+.left-panel{width:195px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.psec{padding:0.65rem;border-bottom:1px solid var(--border);}
+.plbl{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.3em;color:var(--muted);text-transform:uppercase;margin-bottom:0.5rem;}
+.k-tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:0.5rem;}
+.k-tab{font-family:'Cinzel',serif;font-size:0.58rem;padding:0.28rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;text-align:center;transition:all 0.2s;}
+.k-tab.active{border-color:var(--kc);color:var(--kc);}
+.kstat{border:1px solid var(--border);padding:0.55rem;background:rgba(255,255,255,0.02);font-size:0.7rem;margin-bottom:0.4rem;}
+.kstat.cur{border-color:var(--kc);}
+.kstat-name{font-family:'Cinzel',serif;font-size:0.75rem;margin-bottom:0.3rem;}
+.kr{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:0.15rem;}
+.kr span{color:var(--gold);font-family:'Cinzel',serif;}
+.hpb{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:0.3rem;overflow:hidden;}
+.hpf{height:100%;border-radius:2px;transition:width 0.4s;}
+.unit-list{display:flex;flex-direction:column;gap:3px;}
+.uitem{display:flex;align-items:center;gap:5px;padding:0.35rem 0.45rem;border:1px solid var(--border);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s;font-size:0.72rem;}
+.uitem:hover{border-color:var(--gold);}
+.uitem.sel{border-color:var(--gold);background:rgba(201,168,76,0.08);}
+.uitem.placed{border-style:dashed;opacity:0.7;}
+.uemoji{font-size:1.1rem;flex-shrink:0;}
+.uinfo{flex:1;min-width:0;}
+.uname{font-family:'Cinzel',serif;font-size:0.62rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ustats{font-size:0.58rem;color:var(--muted);}
+.uhp{font-size:0.58rem;color:var(--eth);}
+.place-hint{font-size:0.63rem;color:var(--gold);font-style:italic;text-align:center;padding:0.3rem;display:none;}
+.board-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--bg);position:relative;}
+#board{position:relative;}
+.cell{position:absolute;border:1px solid rgba(201,168,76,0.1);cursor:pointer;transition:border-color 0.15s,background 0.15s;display:flex;align-items:center;justify-content:center;}
+.cell:hover{border-color:rgba(201,168,76,0.45);background:rgba(201,168,76,0.05);}
+.cell.castle0{border-color:rgba(127,119,221,0.5);background:rgba(127,119,221,0.06);}
+.cell.castle1{border-color:rgba(216,90,48,0.5);background:rgba(216,90,48,0.06);}
+.cell.castle2{border-color:rgba(29,158,117,0.5);background:rgba(29,158,117,0.06);}
+.cell.castle3{border-color:rgba(186,117,23,0.5);background:rgba(186,117,23,0.06);}
+.cell.mine{border-color:rgba(29,158,117,0.3);}
+.cell.grial{border-color:var(--gold);animation:pgold 2s infinite;}
+.cell.boss{border-color:rgba(232,76,74,0.4);background:rgba(232,76,74,0.03);}
+.cell.trap{border-color:rgba(232,76,74,0.18);}
+.cell.hmove{border-color:rgba(100,200,255,0.65);background:rgba(100,200,255,0.07);animation:pblue 1s infinite;}
+.cell.hattack{border-color:rgba(232,76,74,0.8);background:rgba(232,76,74,0.1);animation:pred 1s infinite;}
+.cell.hplace{border-color:rgba(29,158,117,0.7);background:rgba(29,158,117,0.07);animation:pgreen 1s infinite;}
+.cell.selcell{border-color:var(--gold);background:rgba(201,168,76,0.09);}
+@keyframes pgold{0%,100%{box-shadow:0 0 5px rgba(201,168,76,0.2);}50%{box-shadow:0 0 14px rgba(201,168,76,0.5);}}
+@keyframes pblue{0%,100%{background:rgba(100,200,255,0.04);}50%{background:rgba(100,200,255,0.13);}}
+@keyframes pred{0%,100%{background:rgba(232,76,74,0.06);}50%{background:rgba(232,76,74,0.17);}}
+@keyframes pgreen{0%,100%{background:rgba(29,158,117,0.04);}50%{background:rgba(29,158,117,0.13);}}
+.cell-bg{position:absolute;opacity:0.22;pointer-events:none;}
+.tokens{display:flex;flex-wrap:wrap;gap:1px;align-items:center;justify-content:center;width:100%;height:100%;padding:2px;position:relative;z-index:1;}
+.tok{border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid;cursor:pointer;transition:transform 0.15s;position:relative;flex-shrink:0;}
+.tok:hover{transform:scale(1.12);}
+.tok.stok{box-shadow:0 0 0 2px var(--gold);}
+.tokhp{position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid rgba(255,255,255,0.2);border-radius:3px;font-size:6px;padding:0 2px;white-space:nowrap;font-family:'Cinzel',serif;pointer-events:none;}
+.right-panel{width:210px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.dice-sec{padding:0.65rem;border-bottom:1px solid var(--border);}
+.dice-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:0.4rem;}
+.die{width:42px;height:42px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--gold);cursor:pointer;transition:all 0.2s;user-select:none;}
+.die:hover{border-color:var(--gold);background:rgba(201,168,76,0.1);}
+.die.sp{animation:dspin 0.4s ease-out;}
+@keyframes dspin{0%{transform:rotate(0) scale(1.3);}100%{transform:rotate(360deg) scale(1);}}
+.dlbl{font-size:0.58rem;color:var(--muted);font-family:'Cinzel',serif;text-align:center;letter-spacing:0.1em;}
+.dresult{font-family:'Cinzel Decorative',serif;font-size:2rem;color:var(--gold-l);text-align:center;min-height:2.5rem;line-height:1.1;}
+.dsub{font-size:0.68rem;color:var(--muted);text-align:center;}
+.cards-sec{padding:0.65rem;border-bottom:1px solid var(--border);flex:1;}
+.cards-list{display:flex;flex-direction:column;gap:5px;}
+.ccard{border:1px solid var(--border);padding:0.5rem;background:rgba(255,255,255,0.02);position:relative;overflow:hidden;}
+.ccard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cc,var(--gold));}
+.ctype{font-family:'Cinzel',serif;font-size:0.53rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;}
+.cname{font-family:'Cinzel',serif;font-size:0.73rem;margin:2px 0;}
+.cicon{font-size:1.3rem;float:right;margin-left:4px;}
+.ceff{font-size:0.68rem;color:var(--muted);line-height:1.4;}
+.ccost{font-size:0.62rem;color:var(--gold);margin-top:2px;}
+.cubtn{font-family:'Cinzel',serif;font-size:0.58rem;padding:0.2rem 0.45rem;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;margin-top:3px;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.1em;}
+.cubtn:hover{background:rgba(201,168,76,0.2);}
+.log-sec{padding:0.65rem;}
+#glog{font-size:0.68rem;color:var(--muted);line-height:1.75;max-height:180px;overflow-y:auto;}
+.abar{flex-shrink:0;background:var(--bg3);border-top:1px solid var(--border);padding:0.45rem 0.75rem;display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;}
+.abtn{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.08em;padding:0.4rem 0.7rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-transform:uppercase;white-space:nowrap;}
+.abtn:hover{border-color:var(--gold);color:var(--gold);}
+.abtn.pr{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08);}
+.abtn.rd{border-color:var(--danger);color:var(--danger);}
+.logmsg{flex:1;font-size:0.78rem;color:var(--muted);font-style:italic;min-width:120px;}
+.logmsg b{color:var(--gold-l);font-style:normal;}
+.cflash{position:fixed;inset:0;background:rgba(232,76,74,0.15);pointer-events:none;z-index:500;opacity:0;transition:opacity 0.3s;}
+.cflash.on{opacity:1;}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;align-items:center;justify-content:center;}
+.mbg.on{display:flex;}
+.mbox{background:var(--bg2);border:1px solid var(--border);padding:1.5rem;max-width:370px;width:90%;max-height:80vh;overflow-y:auto;}
+.mbox h3{font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--gold);margin-bottom:0.65rem;}
+.mbox p{font-size:0.88rem;line-height:1.7;color:var(--muted);white-space:pre-wrap;}
+.mbtns{display:flex;gap:0.5rem;margin-top:0.9rem;}
+.mbtn{font-family:'Cinzel',serif;font-size:0.68rem;padding:0.45rem 0.9rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.mbtn:hover,.mbtn.ok{border-color:var(--gold);color:var(--gold);}
+@media(max-width:680px){.left-panel,.right-panel{display:none;}.instr{display:none;}}
 </style>
 </head>
 <body>
-
-<!-- TOP BAR -->
+<div class="cflash" id="cflash"></div>
 <div class="topbar">
-  <a href="index.html" class="back-btn">← Volver</a>
+  <a href="index.html" class="back-btn">← Salir</a>
   <div class="game-title">✦ VALDRIS</div>
-  <div class="turn-info">Turno <span id="turnNum">1</span> · <span id="currentKingdom">Vael'Khor</span></div>
-  <div class="phase-badge" id="phaseBadge">Fase I — La Gran Guerra</div>
+  <div class="turn-badge" id="tbadge" style="color:var(--vael);border-color:var(--vael)">Turno 1 · Vael'Khor</div>
+  <div class="instr" id="instr">Haz clic en una unidad del panel izquierdo para seleccionarla, luego clic en el tablero para colocarla o moverla.</div>
 </div>
-
-<!-- GAME LAYOUT -->
-<div class="game-layout">
-
-  <!-- LEFT PANEL: Kingdoms -->
-  <div class="side-panel" id="leftPanel">
-    <div class="panel-title">Estado de Reinos</div>
-
-    <div class="k-status active-turn" id="kStatus0" style="--kc:var(--vael)">
-      <div class="k-header"><div class="k-name-sm">Vael'Khor</div><div class="k-indicator"></div></div>
-      <div class="k-resources">
-        <div class="res-item"><div class="res-val" id="res0">45</div><div class="res-key">recursos</div></div>
-        <div class="res-item"><div class="res-val" id="min0">3</div><div class="res-key">minerales</div></div>
-        <div class="res-item"><div class="res-val" id="rec0">1</div><div class="res-key">recolect.</div></div>
-        <div class="res-item"><div class="res-val" id="units0">3</div><div class="res-key">unidades</div></div>
-      </div>
-      <div class="hp-bar-wrap">
-        <div class="hp-label"><span>Castillo</span><span id="hp0">100/100</span></div>
-        <div class="hp-bar"><div class="hp-fill" id="hpf0" style="width:100%"></div></div>
-      </div>
+<div class="main">
+<div class="left-panel">
+  <div class="psec">
+    <div class="plbl">Reino activo</div>
+    <div class="k-tabs" id="ktabs">
+      <div class="k-tab active" style="--kc:var(--vael)" onclick="switchK(0)">Vael</div>
+      <div class="k-tab" style="--kc:var(--drath)" onclick="switchK(1)">Drath</div>
+      <div class="k-tab" style="--kc:var(--eth)" onclick="switchK(2)">Eth</div>
+      <div class="k-tab" style="--kc:var(--ur)" onclick="switchK(3)">Ur'K</div>
     </div>
-
-    <div class="k-status" id="kStatus1" style="--kc:var(--drath)">
-      <div class="k-header"><div class="k-name-sm">Drath'Orn</div><div class="k-indicator"></div></div>
-      <div class="k-resources">
-        <div class="res-item"><div class="res-val" id="res1">45</div><div class="res-key">recursos</div></div>
-        <div class="res-item"><div class="res-val" id="min1">3</div><div class="res-key">minerales</div></div>
-        <div class="res-item"><div class="res-val" id="rec1">1</div><div class="res-key">recolect.</div></div>
-        <div class="res-item"><div class="res-val" id="units1">3</div><div class="res-key">unidades</div></div>
-      </div>
-      <div class="hp-bar-wrap">
-        <div class="hp-label"><span>Castillo</span><span id="hp1">100/100</span></div>
-        <div class="hp-bar"><div class="hp-fill" id="hpf1" style="width:100%"></div></div>
-      </div>
-    </div>
-
-    <div class="k-status" id="kStatus2" style="--kc:var(--eth)">
-      <div class="k-header"><div class="k-name-sm">Eth'Sylva</div><div class="k-indicator"></div></div>
-      <div class="k-resources">
-        <div class="res-item"><div class="res-val" id="res2">45</div><div class="res-key">recursos</div></div>
-        <div class="res-item"><div class="res-val" id="min2">3</div><div class="res-key">minerales</div></div>
-        <div class="res-item"><div class="res-val" id="rec2">1</div><div class="res-key">recolect.</div></div>
-        <div class="res-item"><div class="res-val" id="units2">3</div><div class="res-key">unidades</div></div>
-      </div>
-      <div class="hp-bar-wrap">
-        <div class="hp-label"><span>Castillo</span><span id="hp2">100/100</span></div>
-        <div class="hp-bar"><div class="hp-fill" id="hpf2" style="width:100%"></div></div>
-      </div>
-    </div>
-
-    <div class="k-status" id="kStatus3" style="--kc:var(--ur)">
-      <div class="k-header"><div class="k-name-sm">Ur'Kaath</div><div class="k-indicator"></div></div>
-      <div class="k-resources">
-        <div class="res-item"><div class="res-val" id="res3">45</div><div class="res-key">recursos</div></div>
-        <div class="res-item"><div class="res-val" id="min3">3</div><div class="res-key">minerales</div></div>
-        <div class="res-item"><div class="res-val" id="rec3">1</div><div class="res-key">recolect.</div></div>
-        <div class="res-item"><div class="res-val" id="units3">3</div><div class="res-key">unidades</div></div>
-      </div>
-      <div class="hp-bar-wrap">
-        <div class="hp-label"><span>Castillo</span><span id="hp3">100/100</span></div>
-        <div class="hp-bar"><div class="hp-fill" id="hpf3" style="width:100%"></div></div>
-      </div>
-    </div>
+    <div id="kstats"></div>
   </div>
-
-  <!-- CENTER: Board -->
-  <div class="board-center">
-    <div id="gameBoard"></div>
-  </div>
-
-  <!-- RIGHT PANEL: Selected unit + actions -->
-  <div class="side-panel right" id="rightPanel">
-    <div class="panel-title">Unidad Seleccionada</div>
-
-    <div class="mini-card" id="selectedUnitCard">
-      <div class="mc-title" id="selName">— Ninguna —</div>
-      <div class="mc-body" id="selDesc">Haz clic en una unidad del tablero para ver sus stats.</div>
-      <div class="mc-stats" id="selStats"></div>
-    </div>
-
-    <div class="panel-title" style="margin-top:0.5rem;">Dados</div>
-    <div class="dice-ui">
-      <div>
-        <div class="mini-die" id="gd6" onclick="gameRoll(6)">6</div>
-        <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:2px;">D6</div>
-      </div>
-      <div>
-        <div class="mini-die" id="gd8" onclick="gameRoll(8)">8</div>
-        <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:2px;">D8</div>
-      </div>
-      <div class="die-result" id="gameRollResult">Lanza...</div>
-    </div>
-
-    <div class="panel-title" style="margin-top:0.5rem;">Reglas rápidas</div>
-    <div class="mini-card">
-      <div class="mc-body">
-        <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:0.7rem;">TURNO:</strong><br>
-        1. Tira D6 → mueve unidades<br>
-        2. Recolectores generan recursos<br>
-        3. Ataque si hay enemigo adyacente<br><br>
-        <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:0.7rem;">COMBATE:</strong><br>
-        ATK + D8 vs DEF + D8<br>
-        Diferencia = daño recibido
-      </div>
-    </div>
-
-    <div class="panel-title" style="margin-top:0.5rem;">Registro</div>
-    <div id="gameLog" style="font-size:0.75rem;color:var(--muted);line-height:1.8;"></div>
-  </div>
-
-</div>
-
-<!-- BOTTOM ACTION BAR -->
-<div class="action-panel">
-  <div class="dice-ui">
-    <div class="mini-die" id="movedie" onclick="rollMovement()">?</div>
-    <span style="font-size:0.7rem;color:var(--muted);font-family:'Cinzel',serif;">Tirar movimiento</span>
-  </div>
-  <button class="action-btn primary" onclick="endTurn()">Fin de Turno →</button>
-  <button class="action-btn" onclick="recruitUnit()">+ Reclutar (10r)</button>
-  <button class="action-btn" onclick="assignCollector()">⛏ Asignar Recolector (15r)</button>
-  <button class="action-btn" onclick="buyEquipment()">🧥 Comprar Equipo</button>
-  <button class="action-btn danger" onclick="showRules()">? Reglas</button>
-  <div class="log-area">
-    <div class="log-text" id="actionLog">Selecciona una unidad para comenzar tu turno.</div>
+  <div class="psec" style="flex:1">
+    <div class="plbl">Unidades — clic para seleccionar</div>
+    <div class="unit-list" id="ulist"></div>
+    <div class="place-hint" id="phint">✦ Ahora haz clic en el tablero</div>
   </div>
 </div>
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <h3 id="modalTitle">Valdris</h3>
-    <p id="modalBody">...</p>
-    <div class="modal-btns">
-      <button class="modal-btn ok" onclick="closeModal()">Continuar</button>
-      <button class="modal-btn" id="modal2btn" onclick="closeModal()" style="display:none">Cancelar</button>
+<div class="board-wrap"><div id="board"></div></div>
+<div class="right-panel">
+  <div class="dice-sec">
+    <div class="plbl">Dados</div>
+    <div class="dice-row">
+      <div><div class="die" id="dd6" onclick="rollD(6)">?</div><div class="dlbl">D6 mov</div></div>
+      <div><div class="die" id="dd8" onclick="rollD(8)">?</div><div class="dlbl">D8 atk</div></div>
     </div>
+    <div class="dresult" id="dres">—</div>
+    <div class="dsub" id="dsub">Tira un dado</div>
+  </div>
+  <div class="cards-sec">
+    <div class="plbl">Cartas en mano</div>
+    <div class="cards-list" id="clist"></div>
+  </div>
+  <div class="log-sec">
+    <div class="plbl">Registro</div>
+    <div id="glog"></div>
   </div>
 </div>
-
+</div>
+<div class="abar">
+  <button class="abtn pr" onclick="rollMov()">🎲 Tirar movimiento</button>
+  <button class="abtn" onclick="recSoldier()">+ Soldado (10r)</button>
+  <button class="abtn" onclick="recCollector()">⛏ Recolector (15r)</button>
+  <button class="abtn" onclick="drawCard()">🃏 Robar carta (2min)</button>
+  <button class="abtn rd" onclick="endTurn()">Fin turno →</button>
+  <div class="logmsg" id="lmsg">¡Bienvenido a Valdris!</div>
+</div>
+<div class="mbg" id="modal"><div class="mbox"><h3 id="mt">—</h3><p id="mb"></p><div class="mbtns"><button class="mbtn ok" onclick="closeM()">Continuar</button></div></div></div>
 <script>
-const KINGDOMS = [
-  {name:"Vael'Khor", color:"#7F77DD", emoji:"🔮", atk:8, def:6, pv:25, pos:{row:0,col:5}},
-  {name:"Drath'Orn", color:"#D85A30", emoji:"⚙️", atk:9, def:10, pv:30, pos:{row:10,col:5}},
-  {name:"Eth'Sylva", color:"#1D9E75", emoji:"🌫️", atk:7, def:5, pv:20, pos:{row:5,col:10}},
-  {name:"Ur'Kaath", color:"#BA7517", emoji:"💀", atk:5, def:5, pv:20, pos:{row:5,col:0}},
+const KD=[
+  {name:"Vael'Khor",short:"Vael",color:"#7F77DD",hero:{name:"Zhar Vel",emoji:"🔮",atk:8,def:6,maxPv:25,power:"Precognición: ve el dado enemigo 1x/turno"}},
+  {name:"Drath'Orn",short:"Drath",color:"#D85A30",hero:{name:"Sorra Ign",emoji:"⚙️",atk:9,def:10,maxPv:30,power:"Blindaje: reduce daño en 2"}},
+  {name:"Eth'Sylva",short:"Eth",color:"#1D9E75",hero:{name:"Aeon Mir",emoji:"🌫️",atk:7,def:5,maxPv:20,power:"Tres Cuerpos: resucita 1x"}},
+  {name:"Ur'Kaath",short:"Ur'K",color:"#BA7517",hero:{name:"Krul Vex",emoji:"💀",atk:5,def:5,maxPv:20,power:"Absorción: +2ATK al matar héroes"}},
 ];
-const BOARD_SIZE = 11;
-const CELL_SIZE = 48;
-
-let state = {
-  turn: 1,
-  currentKingdom: 0,
-  phase: 1,
-  movesLeft: 0,
-  selectedCell: null,
-  kingdoms: KINGDOMS.map((k,i)=>({
-    ...k, resources:45, minerals:3, collectors:1,
-    castleHp:100, units:[
-      {type:'hero', name: k.name==="Vael'Khor"?"Zhar Vel":k.name==="Drath'Orn"?"Sorra Ign":k.name==="Eth'Sylva"?"Aeon Mir":"Krul Vex",
-       emoji:k.emoji, atk:k.atk, def:k.def, pv:k.pv, maxPv:k.pv, level:1, row:k.pos.row, col:k.pos.col, kingdom:i},
-      {type:'soldier', name:'Soldado', emoji:'⚔️', atk:4, def:2, pv:8, maxPv:8, row:k.pos.row+(i<2?1:-1), col:k.pos.col+(i%2===0?0:1), kingdom:i},
-      {type:'collector', name:'Recolector', emoji:'⛏', atk:1, def:1, pv:5, maxPv:5, row:k.pos.row+(i<2?-1:1), col:k.pos.col+(i%2===0?1:0), kingdom:i},
-    ],
-    alive:true, eliminated:false,
-  })),
-  cells: buildCells(),
-  log: [],
+const CARDS=[
+  {type:"Mineral",name:"Cristal de Veta",icon:"💎",eff:"+15 recursos",cc:"#1D9E75",fn:()=>gRes(15)},
+  {type:"Mineral",name:"Pepita de Acero",icon:"🪨",eff:"+10 recursos",cc:"#1D9E75",fn:()=>gRes(10)},
+  {type:"Mineral",name:"Gema Estelar",icon:"💠",eff:"+25 recursos",cc:"#1D9E75",fn:()=>gRes(25)},
+  {type:"Equipo",name:"Capa de Sombra",icon:"🧥",eff:"+2 DEF héroe",cc:"#7F77DD",fn:()=>buffH('def',2)},
+  {type:"Equipo",name:"Casco Cósmico",icon:"⛑️",eff:"+3 DEF héroe",cc:"#534AB7",fn:()=>buffH('def',3)},
+  {type:"Equipo",name:"Espada de Cristal",icon:"⚔️",eff:"+4 ATK héroe",cc:"#D85A30",fn:()=>buffH('atk',4)},
+  {type:"Equipo",name:"Medalla de Valor",icon:"🏅",eff:"+5 PV héroe",cc:"#BA7517",fn:()=>buffH('pv',5)},
+  {type:"Evento",name:"Tesoro Oculto",icon:"💰",eff:"+20 recursos",cc:"#c9a84c",fn:()=>gRes(20)},
+  {type:"Evento",name:"Viento Favorable",icon:"💨",eff:"+2 movimiento",cc:"#85B7EB",fn:()=>gMov(2)},
+  {type:"Evento",name:"Portal del Vacío",icon:"🌀",eff:"Mueve héroe libre",cc:"#AFA9EC",fn:()=>portal()},
+  {type:"Evento",name:"Emboscada",icon:"⚠️",eff:"Pierde movimiento",cc:"#E24B4A",fn:()=>lMov()},
+  {type:"Evento",name:"Trampa de Raíz",icon:"🪤",eff:"Unidad inmovilizada",cc:"#E24B4A",fn:()=>lMov()},
+];
+const BS=11;
+let G={
+  turn:1,cur:0,movL:0,selU:null,placU:null,
+  kingdoms:KD.map((k,i)=>{
+    const cp=[{r:0,c:5},{r:10,c:5},{r:5,c:10},{r:5,c:0}][i];
+    return{...k,res:50,min:5,col:1,chp:100,alive:true,cards:[],
+      units:[
+        {id:'h'+i,name:k.hero.name,emoji:k.hero.emoji,type:'hero',atk:k.hero.atk,def:k.hero.def,pv:k.hero.maxPv,mpv:k.hero.maxPv,r:cp.r,c:cp.c,placed:true,ki:i,ba:0,bd:0,bp:0,power:k.hero.power},
+        {id:'s'+i+'a',name:'Soldado',emoji:'⚔️',type:'soldier',atk:4,def:2,pv:8,mpv:8,r:-1,c:-1,placed:false,ki:i,ba:0,bd:0,bp:0},
+        {id:'s'+i+'b',name:'Soldado',emoji:'⚔️',type:'soldier',atk:4,def:2,pv:8,mpv:8,r:-1,c:-1,placed:false,ki:i,ba:0,bd:0,bp:0},
+      ]};
+  }),
+  cells:null,
 };
-
-function buildCells(){
-  const cells = [];
-  for(let r=0;r<BOARD_SIZE;r++){
-    cells[r]=[];
-    for(let c=0;c<BOARD_SIZE;c++){
-      let type='path';
-      if(r===0&&c===5) type='castle0';
-      else if(r===10&&c===5) type='castle1';
-      else if(r===5&&c===10) type='castle2';
-      else if(r===5&&c===0) type='castle3';
-      else if((r===2&&c===2)||(r===2&&c===8)||(r===8&&c===2)||(r===8&&c===8)) type='mine';
-      else if(r===5&&c===5) type='grial';
-      else if((r===4&&c===4)||(r===4&&c===6)||(r===6&&c===4)||(r===6&&c===6)) type='boss';
-      else if((r===3&&c===3)||(r===3&&c===7)||(r===7&&c===3)||(r===7&&c===7)) type='trap';
-      else if((r===1&&c===5)||(r===9&&c===5)||(r===5&&c===1)||(r===5&&c===9)) type='altar';
-      cells[r][c]={type, units:[]};
-    }
-  }
-  return cells;
+G.cells=buildC();
+function buildC(){
+  const c=[];
+  for(let r=0;r<BS;r++){c[r]=[];for(let cl=0;cl<BS;cl++){
+    let t='path';
+    if(r===0&&cl===5)t='castle0';else if(r===10&&cl===5)t='castle1';
+    else if(r===5&&cl===10)t='castle2';else if(r===5&&cl===0)t='castle3';
+    else if((r===2&&cl===2)||(r===2&&cl===8)||(r===8&&cl===2)||(r===8&&cl===8))t='mine';
+    else if(r===5&&cl===5)t='grial';
+    else if((r===4&&cl===4)||(r===4&&cl===6)||(r===6&&cl===4)||(r===6&&cl===6))t='boss';
+    else if((r===3&&cl===3)||(r===3&&cl===7)||(r===7&&cl===3)||(r===7&&cl===7))t='trap';
+    c[r][cl]={t,units:[]};
+  }}
+  G.kingdoms.forEach(k=>k.units.forEach(u=>{if(u.placed&&u.r>=0)c[u.r][u.c].units.push(u);}));
+  return c;
 }
-
-function placeUnitsOnBoard(){
-  state.kingdoms.forEach(k=>{
-    k.units.forEach(u=>{
-      if(u.row>=0&&u.row<BOARD_SIZE&&u.col>=0&&u.col<BOARD_SIZE){
-        state.cells[u.row][u.col].units.push(u);
+function render(){rBoard();rLeft();rCards();
+  const k=G.kingdoms[G.cur];
+  document.getElementById('tbadge').textContent=`Turno ${G.turn} · ${k.name}`;
+  document.getElementById('tbadge').style.color=k.color;
+  document.getElementById('tbadge').style.borderColor=k.color;
+}
+function rBoard(){
+  const wrap=document.getElementById('board');
+  const aw=Math.min(document.querySelector('.board-wrap').clientWidth-16,document.querySelector('.board-wrap').clientHeight-16,540);
+  const cs=Math.floor(aw/BS);
+  wrap.style.cssText=`position:relative;width:${cs*BS}px;height:${cs*BS}px;`;
+  wrap.innerHTML='';
+  const bgI={mine:'⛏',grial:'✦',boss:'☠',trap:'⚠',castle0:'🏰',castle1:'🏯',castle2:'🗼',castle3:'⛩'};
+  for(let r=0;r<BS;r++){for(let cl=0;cl<BS;cl++){
+    const cell=G.cells[r][cl];
+    const d=document.createElement('div');
+    d.className='cell '+cell.t;
+    d.style.cssText=`left:${cl*cs}px;top:${r*cs}px;width:${cs}px;height:${cs}px;`;
+    if(G.selU){
+      const u=G.kingdoms[G.selU.ki].units[G.selU.ui];
+      if(u.placed&&u.r===r&&u.c===cl)d.classList.add('selcell');
+      if(u.placed&&G.movL>0&&dist(u.r,u.c,r,cl)<=G.movL&&!(r===u.r&&cl===u.c)){
+        if(cell.units.some(x=>x.ki!==G.cur))d.classList.add('hattack');
+        else if(!cell.units.some(x=>x.ki===G.cur))d.classList.add('hmove');
       }
+    }
+    if(G.placU)d.classList.add('hplace');
+    if(bgI[cell.t]&&cell.units.length===0){
+      const bg=document.createElement('span');
+      bg.className='cell-bg';bg.style.fontSize=cs*0.38+'px';bg.textContent=bgI[cell.t];
+      d.appendChild(bg);
+    }
+    if(cell.units.length>0){
+      const td=document.createElement('div');td.className='tokens';
+      cell.units.forEach(u=>{
+        const tk=document.createElement('div');tk.className='tok';
+        const ts=Math.max(cs*0.36,16);
+        tk.style.cssText=`width:${ts}px;height:${ts}px;font-size:${ts*0.58}px;background:${KD[u.ki].color}22;border-color:${KD[u.ki].color};`;
+        if(G.selU&&G.kingdoms[G.selU.ki].units[G.selU.ui].id===u.id)tk.classList.add('stok');
+        tk.textContent=u.emoji;
+        const hp=document.createElement('div');hp.className='tokhp';hp.textContent=u.pv+'/'+u.mpv;
+        tk.appendChild(hp);
+        tk.addEventListener('click',e=>{e.stopPropagation();selUnit(u);});
+        td.appendChild(tk);
+      });
+      d.appendChild(td);
+    }
+    d.addEventListener('click',()=>cellCk(r,cl));
+    wrap.appendChild(d);
+  }}
+}
+function rLeft(){
+  const k=G.kingdoms[G.cur];
+  document.getElementById('kstats').innerHTML=`<div class="kstat cur" style="--kc:${k.color}"><div class="kstat-name" style="color:${k.color}">${k.name}</div><div class="kr">Recursos <span>${k.res}</span></div><div class="kr">Minerales <span>${k.min}</span></div><div class="kr">Recolectores <span>${k.col}</span></div><div class="kr">Movimiento <span>${G.movL}</span></div><div class="hpb"><div class="hpf" style="width:${k.chp}%;background:${k.color}"></div></div></div>`;
+  const ul=document.getElementById('ulist');ul.innerHTML='';
+  k.units.forEach((u,ui)=>{
+    if(u.pv<=0)return;
+    const d=document.createElement('div');
+    d.className='uitem'+(u.placed?' placed':'');
+    if(G.selU&&G.selU.ki===G.cur&&G.selU.ui===ui)d.classList.add('sel');
+    d.innerHTML=`<div class="uemoji">${u.emoji}</div><div class="uinfo"><div class="uname">${u.name}${u.type==='hero'?' ⭐':''}</div><div class="ustats">ATK ${u.atk+u.ba} · DEF ${u.def+u.bd}</div><div class="uhp">PV ${u.pv}/${u.mpv}</div></div>`;
+    d.title=u.power||'';
+    d.addEventListener('click',()=>{
+      if(!u.placed){G.placU=u;G.selU=null;document.getElementById('phint').style.display='block';setI(`Colocando ${u.name} — haz clic en cualquier casilla libre`);}
+      else selUnit(u);
     });
+    ul.appendChild(d);
   });
 }
-
-function renderBoard(){
-  const board = document.getElementById('gameBoard');
-  const bSize = Math.min(window.innerWidth-480, window.innerHeight-140, 520);
-  const cs = Math.floor(bSize/BOARD_SIZE);
-  board.style.width = cs*BOARD_SIZE+'px';
-  board.style.height = cs*BOARD_SIZE+'px';
-  board.style.position='relative';
-  board.innerHTML='';
-
-  for(let r=0;r<BOARD_SIZE;r++){
-    for(let c=0;c<BOARD_SIZE;c++){
-      const cell = state.cells[r][c];
-      const div = document.createElement('div');
-      div.className='board-cell';
-      div.style.cssText=`left:${c*cs}px;top:${r*cs}px;width:${cs}px;height:${cs}px;font-size:${cs*0.45}px;`;
-
-      const typeStyles={
-        castle0:'border-color:rgba(127,119,221,0.6);background:rgba(127,119,221,0.08);',
-        castle1:'border-color:rgba(216,90,48,0.6);background:rgba(216,90,48,0.08);',
-        castle2:'border-color:rgba(29,158,117,0.6);background:rgba(29,158,117,0.08);',
-        castle3:'border-color:rgba(186,117,23,0.6);background:rgba(186,117,23,0.08);',
-        mine:'border-color:rgba(29,158,117,0.4);background:rgba(29,158,117,0.03);',
-        grial:'border-color:#c9a84c;background:rgba(201,168,76,0.1);',
-        boss:'border-color:rgba(232,76,74,0.4);background:rgba(232,76,74,0.04);',
-        trap:'border-color:rgba(232,76,74,0.15);',
-        altar:'border-color:rgba(127,119,221,0.3);',
-      };
-      if(typeStyles[cell.type]) div.style.cssText+=typeStyles[cell.type];
-
-      if(state.selectedCell&&state.selectedCell.r===r&&state.selectedCell.c===c) div.classList.add('selected');
-
-      const icons={mine:'⛏',grial:'✦',boss:'☠',trap:'⚠',altar:'△',castle0:'🏰',castle1:'🏯',castle2:'🗼',castle3:'⛩'};
-      if(cell.units.length>0){
-        const u=cell.units[0];
-        div.innerHTML=`<span title="${u.name} (${u.pv}/${u.maxPv} PV)">${u.emoji}</span>`;
-        if(cell.units.length>1) div.innerHTML+=`<div class="cell-label">+${cell.units.length-1}</div>`;
-      } else if(icons[cell.type]){
-        div.innerHTML=`<span style="opacity:0.4;font-size:${cs*0.35}px">${icons[cell.type]}</span>`;
-      }
-
-      div.addEventListener('click',()=>selectCell(r,c));
-      board.appendChild(div);
+function rCards(){
+  const k=G.kingdoms[G.cur];const cl=document.getElementById('clist');cl.innerHTML='';
+  if(!k.cards.length){cl.innerHTML='<div style="font-size:0.72rem;color:var(--muted);font-style:italic;text-align:center;padding:0.4rem">Sin cartas</div>';return;}
+  k.cards.forEach((c,i)=>{
+    const d=document.createElement('div');d.className='ccard';d.style.setProperty('--cc',c.cc);
+    d.innerHTML=`<span class="cicon">${c.icon}</span><div class="ctype">${c.type}</div><div class="cname">${c.name}</div><div class="ceff">${c.eff}</div><button class="cubtn" onclick="useC(${i})">Usar</button>`;
+    cl.appendChild(d);
+  });
+}
+function selUnit(u){
+  if(u.ki!==G.cur){setM(`Unidad de <b>${KD[u.ki].name}</b> — no es tu turno.`);return;}
+  const ui=G.kingdoms[G.cur].units.indexOf(u);
+  G.selU={ki:G.cur,ui};G.placU=null;document.getElementById('phint').style.display='none';
+  setI(`${u.name} seleccionado · ATK:${u.atk+u.ba} DEF:${u.def+u.bd} PV:${u.pv} · ${G.movL>0?'Haz clic en casilla azul para mover':'Tira el dado primero'}`);
+  render();
+}
+function cellCk(r,cl){
+  if(G.placU){
+    const u=G.placU,cell=G.cells[r][cl];
+    if(cell.units.some(x=>x.ki!==G.cur)){setM('No puedes colocar ahí, hay enemigos.');return;}
+    if(u.placed&&u.r>=0)remC(u);
+    u.r=r;u.c=cl;u.placed=true;cell.units.push(u);
+    G.placU=null;document.getElementById('phint').style.display='none';
+    addL(`${u.name} colocado en [${r},${cl}].`);setM(`<b>${u.name}</b> colocado en el tablero.`);
+    setI('Unidad colocada. Tira el dado y luego haz clic en ella para moverla.');render();return;
+  }
+  if(G.selU&&G.movL>0){
+    const u=G.kingdoms[G.selU.ki].units[G.selU.ui];
+    if(!u.placed)return;
+    const d=dist(u.r,u.c,r,cl);
+    if(d>G.movL){setM(`Muy lejos: ${d} casillas, tienes ${G.movL}.`);return;}
+    const cell=G.cells[r][cl];
+    const enemies=cell.units.filter(x=>x.ki!==G.cur);
+    if(enemies.length>0){doCombat(u,enemies[0]);G.movL=0;}
+    else if(cell.units.some(x=>x.ki===G.cur)&&!(r===u.r&&cl===u.c)){setM('Ya hay aliado ahí.');}
+    else if(!(r===u.r&&cl===u.c)){
+      remC(u);u.r=r;u.c=cl;cell.units.push(u);G.movL-=d;
+      addL(`${u.name} → [${r},${cl}]. Mov: ${G.movL}`);setM(`<b>${u.name}</b> movido. Quedan <b>${G.movL}</b> mov.`);
+      checkEv(r,cl,u);render();
     }
+    return;
   }
+  const cell=G.cells[r][cl];
+  const my=cell.units.find(x=>x.ki===G.cur);
+  if(my){selUnit(my);return;}
+  const en=cell.units.find(x=>x.ki!==G.cur);
+  if(en)setI(`Enemigo: ${en.name} (${KD[en.ki].name}) ATK:${en.atk} DEF:${en.def} PV:${en.pv}`);
+  else setI(`Casilla [${r},${cl}] — ${cell.t}`);
 }
-
-function selectCell(r,c){
-  const cell=state.cells[r][c];
-  state.selectedCell={r,c};
-  const myUnits=cell.units.filter(u=>u.kingdom===state.currentKingdom);
-  const selName=document.getElementById('selName');
-  const selDesc=document.getElementById('selDesc');
-  const selStats=document.getElementById('selStats');
-
-  if(myUnits.length>0){
-    const u=myUnits[0];
-    selName.textContent=u.name;
-    selDesc.textContent=`${state.kingdoms[u.kingdom].name} · ${u.type==='hero'?'Héroe':u.type==='collector'?'Recolector':'Soldado'}`;
-    selStats.innerHTML=`
-      <div class="mc-stat">ATK <em>${u.atk}</em></div>
-      <div class="mc-stat">DEF <em>${u.def}</em></div>
-      <div class="mc-stat">PV <em>${u.pv}/${u.maxPv}</em></div>
-      ${u.level?`<div class="mc-stat">Nv <em>${u.level}</em></div>`:''}
-    `;
-    setLog(`${u.name} seleccionado. ATK:${u.atk} DEF:${u.def} PV:${u.pv}/${u.maxPv}`);
-  } else if(cell.units.length>0){
-    const u=cell.units[0];
-    selName.textContent=`${u.name} (enemigo)`;
-    selDesc.textContent=state.kingdoms[u.kingdom].name;
-    selStats.innerHTML=`<div class="mc-stat">PV <em>${u.pv}/${u.maxPv}</em></div>`;
-    setLog(`Unidad enemiga: ${u.name} de ${state.kingdoms[u.kingdom].name}`);
+function remC(u){if(u.r<0||u.c<0)return;const a=G.cells[u.r][u.c].units;const i=a.indexOf(u);if(i>=0)a.splice(i,1);}
+function dist(r1,c1,r2,c2){return Math.abs(r1-r2)+Math.abs(c1-c2);}
+function doCombat(att,def){
+  const da=Math.floor(Math.random()*8)+1,dd=Math.floor(Math.random()*8)+1;
+  const ta=att.atk+att.ba+da,td=def.def+def.bd+dd;
+  const dmg=Math.max(0,ta-td);
+  document.getElementById('cflash').classList.add('on');
+  setTimeout(()=>document.getElementById('cflash').classList.remove('on'),300);
+  def.pv-=dmg;
+  const res=dmg>0?`¡${att.name} hace ${dmg} daño a ${def.name}!`:`${def.name} bloqueó el ataque.`;
+  addL(`⚔️ ${att.name}(${ta}) vs ${def.name}(${td}) → ${dmg} daño`);
+  if(def.pv<=0){
+    remC(def);G.kingdoms[def.ki].units=G.kingdoms[def.ki].units.filter(x=>x.id!==def.id);
+    G.kingdoms[G.cur].res+=20;
+    showM('¡Unidad eliminada!',`${att.name} venció a ${def.name}.\n\nATK: ${att.atk}+${da}=${ta}\nDEF: ${def.def}+${dd}=${td}\nDaño: ${dmg}\n\n☠ ${def.name} eliminado\n+20 recursos para ${G.kingdoms[G.cur].name}`);
   } else {
-    selName.textContent=`Casilla [${r},${c}]`;
-    const typeNames={mine:'⛏ Mina de recursos',grial:'✦ El Grial Eterno',boss:'☠ Zona de Jefe',trap:'⚠ Trampa',altar:'△ Altar',path:'Camino',
-      castle0:"Castillo Vael'Khor",castle1:"Castillo Drath'Orn",castle2:"Castillo Eth'Sylva",castle3:"Castillo Ur'Kaath"};
-    selDesc.textContent=typeNames[cell.type]||'Casilla vacía';
-    selStats.innerHTML='';
-    setLog(`Casilla: ${typeNames[cell.type]||'camino'}`);
+    showM('Resultado del combate',`${att.name} atacó a ${def.name}.\n\nATK: ${att.atk}+${da}=${ta}\nDEF: ${def.def}+${dd}=${td}\nDaño: ${dmg} puntos\n${def.name} tiene ${def.pv}/${def.mpv} PV restantes.`);
   }
-  renderBoard();
+  render();
 }
-
-function rollMovement(){
-  const die=document.getElementById('movedie');
-  die.classList.remove('rolling');
-  void die.offsetWidth;
-  die.classList.add('rolling');
-  let v;
-  const iv=setInterval(()=>{v=Math.floor(Math.random()*6)+1;die.textContent=v;},60);
-  setTimeout(()=>{
-    clearInterval(iv);
-    v=Math.floor(Math.random()*6)+1;
-    die.textContent=v;
-    state.movesLeft=v;
-    setLog(`🎲 Dado de movimiento: <span>${v}</span> casillas disponibles.`);
-    addLog(`Turno ${state.turn}: ${state.kingdoms[state.currentKingdom].name} tiró ${v}.`);
-    die.classList.remove('rolling');
-  },400);
+function checkEv(r,c,u){
+  const t=G.cells[r][c].t;
+  if(t==='mine'){G.kingdoms[G.cur].res+=5;G.kingdoms[G.cur].min+=1;setM(`<b>⛏ Mina!</b> +5 recursos y +1 mineral.`);}
+  else if(t==='trap'){G.movL=0;showM('⚠ ¡Trampa!',`${u.name} cayó en una trampa.\nPierde el resto del movimiento este turno.`);}
+  else if(t==='grial'){showM('✦ EL GRIAL ETERNO','¡Has llegado al núcleo!\n\nRevela la carta sellada ahora.\nEl destino de Valdris se decide aquí.');}
+  else if(t==='boss'){
+    const pow=Math.floor(Math.random()*3);
+    const result=u.atk+u.ba+Math.floor(Math.random()*8)+1;
+    const bdef=8+pow*4+Math.floor(Math.random()*8)+1;
+    if(result>bdef){G.kingdoms[G.cur].res+=25;showM('¡Guardián derrotado!',`${u.name} venció al guardián de la zona.\n\n+25 recursos.\n¡Un Fragmento del Grial obtenido!`);}
+    else showM('Guardián encontrado',`${u.name} encontró un guardián poderoso.\nRetírate o ataca con más unidades.\n\nTu ATK: ${result} vs DEF guardián: ${bdef}`);
+  }
 }
-
-function gameRoll(faces){
-  const id='gd'+faces;
-  const el=document.getElementById(id);
-  el.classList.remove('rolling');
-  void el.offsetWidth;
-  el.classList.add('rolling');
-  let v;
-  const iv=setInterval(()=>{v=Math.floor(Math.random()*faces)+1;el.textContent=v;},60);
-  setTimeout(()=>{
-    clearInterval(iv);
-    v=Math.floor(Math.random()*faces)+1;
-    el.textContent=v;
-    document.getElementById('gameRollResult').innerHTML=`= <span>${v}</span>`;
-    el.classList.remove('rolling');
-  },400);
+function rollMov(){
+  const d=document.getElementById('dd6');d.classList.remove('sp');void d.offsetWidth;d.classList.add('sp');
+  let v;const iv=setInterval(()=>{v=Math.floor(Math.random()*6)+1;d.textContent=v;},60);
+  setTimeout(()=>{clearInterval(iv);v=Math.floor(Math.random()*6)+1;d.textContent=v;G.movL=v;
+    document.getElementById('dres').textContent=v;document.getElementById('dsub').textContent='casillas';
+    addL(`🎲 ${G.kingdoms[G.cur].name} tiró ${v}.`);setM(`🎲 Dado: <b>${v}</b> — selecciona y mueve.`);
+    setI(`Tienes ${v} casillas. Selecciona una pieza y haz clic en las casillas azules.`);render();},400);
 }
-
+function rollD(f){
+  const id='dd'+f,el=document.getElementById(id);el.classList.remove('sp');void el.offsetWidth;el.classList.add('sp');
+  let v;const iv=setInterval(()=>{v=Math.floor(Math.random()*f)+1;el.textContent=v;},60);
+  setTimeout(()=>{clearInterval(iv);v=Math.floor(Math.random()*f)+1;el.textContent=v;
+    document.getElementById('dres').textContent=v;document.getElementById('dsub').textContent=`en D${f}`;},400);
+}
 function endTurn(){
-  const k=state.kingdoms[state.currentKingdom];
-  const income=5+k.collectors*5;
-  k.resources+=income;
-  k.minerals+=k.collectors;
-  document.getElementById('res'+state.currentKingdom).textContent=k.resources;
-  document.getElementById('min'+state.currentKingdom).textContent=k.minerals;
-
-  addLog(`${k.name} recibe +${income} recursos, +${k.collectors} minerales.`);
-  setLog(`Fin del turno de <span>${k.name}</span>. +${income} recursos generados.`);
-
-  let next=(state.currentKingdom+1)%4;
-  let tries=0;
-  while(state.kingdoms[next].eliminated&&tries<4){next=(next+1)%4;tries++;}
-
-  if(tries>=4){showModal('¡Victoria!','Solo queda un reino en pie. La segunda fase comienza.');return;}
-
-  state.currentKingdom=next;
-  if(next===0) state.turn++;
-
-  document.getElementById('turnNum').textContent=state.turn;
-  document.getElementById('currentKingdom').textContent=state.kingdoms[next].name;
-
-  document.querySelectorAll('.k-status').forEach((el,i)=>{
-    el.classList.toggle('active-turn',i===next);
-  });
-  document.getElementById('movedie').textContent='?';
-  state.movesLeft=0;
-  state.selectedCell=null;
-  renderBoard();
+  const k=G.kingdoms[G.cur];const inc=5+k.col*5;k.res+=inc;k.min+=k.col;
+  addL(`✓ Fin turno ${G.turn} de ${k.name}. +${inc}r +${k.col}min.`);setM(`Turno de <b>${k.name}</b> terminado. +${inc} recursos.`);
+  let nx=(G.cur+1)%4;let t=0;while(!G.kingdoms[nx].alive&&t<4){nx=(nx+1)%4;t++;}
+  G.cur=nx;if(nx===0)G.turn++;G.movL=0;G.selU=null;G.placU=null;
+  document.getElementById('phint').style.display='none';
+  document.querySelectorAll('.k-tab').forEach((el,i)=>el.classList.toggle('active',i===nx));
+  setI(`Turno de ${G.kingdoms[nx].name}. Tira el dado de movimiento.`);render();
 }
-
-function recruitUnit(){
-  const k=state.kingdoms[state.currentKingdom];
-  if(k.resources<10){setLog('No tienes recursos suficientes para reclutar (necesitas 10).');return;}
-  k.resources-=10;
-  k.units.push({type:'soldier',name:'Soldado',emoji:'⚔️',atk:4,def:2,pv:8,maxPv:8,
-    row:k.units[0].row,col:k.units[0].col,kingdom:state.currentKingdom});
-  document.getElementById('res'+state.currentKingdom).textContent=k.resources;
-  document.getElementById('units'+state.currentKingdom).textContent=k.units.length;
-  setLog(`Soldado reclutado para ${k.name}. Recursos: ${k.resources}`);
-  addLog(`${k.name} reclutó un soldado.`);
-}
-
-function assignCollector(){
-  const k=state.kingdoms[state.currentKingdom];
-  if(k.resources<15){setLog('Necesitas 15 recursos para asignar un recolector.');return;}
-  if(k.collectors>=3){setLog('Ya tienes el máximo de 3 recolectores activos.');return;}
-  k.resources-=15;
-  k.collectors++;
-  document.getElementById('res'+state.currentKingdom).textContent=k.resources;
-  document.getElementById('rec'+state.currentKingdom).textContent=k.collectors;
-  setLog(`Recolector asignado. Ahora tienes ${k.collectors} activos. +${k.collectors*5} recursos/turno.`);
-}
-
-function buyEquipment(){
-  const k=state.kingdoms[state.currentKingdom];
-  if(k.minerals<8){setLog('Necesitas al menos 8 minerales para comprar equipo.');return;}
-  const items=[
-    {name:'Capa de Sombra',cost:8,effect:'+2 DEF permanente'},
-    {name:'Casco de Acero Cósmico',cost:12,effect:'+3 DEF, -50% daño en área'},
-    {name:'Medalla de Valor',cost:10,effect:'+5 PV máximos'},
-    {name:'Espada de Cristal',cost:15,effect:'+4 ATK'},
-  ];
-  const affordable=items.filter(i=>i.cost<=k.minerals);
-  if(affordable.length===0){setLog('No tienes minerales suficientes para ningún equipo.');return;}
-  const item=affordable[Math.floor(Math.random()*affordable.length)];
-  k.minerals-=item.cost;
-  document.getElementById('min'+state.currentKingdom).textContent=k.minerals;
-  showModal(`Equipo adquirido: ${item.name}`,`Efecto: ${item.effect}\n\nCosto: ${item.cost} minerales. Minerales restantes: ${k.minerals}`);
-  addLog(`${k.name} compró ${item.name}.`);
-}
-
-function showRules(){
-  showModal('Reglas de Valdris',
-    `TURNO:\n1. Tira el D6 (movimiento)\n2. Mueve tus unidades\n3. Los recolectores generan recursos automáticamente al fin del turno\n\nCOMBATE:\nATK + D8 vs DEF + D8 → diferencia = daño\n\nRECURSOS:\nRecolector básico: +5/turno\nCon edificio: +10/turno\nCon héroe adyacente: +15/turno\n\nVICTORIA FASE I:\nCaptura el castillo enemigo llegando a él. Absorbes sus recursos.\n\nFASE II:\nDerrota los 4 jefes del núcleo y recoge los Fragmentos del Grial para revelar la carta sellada.`
-  );
-}
-
-function showModal(title,body){
-  document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalBody').textContent=body;
-  document.getElementById('modal').classList.add('show');
-}
-function closeModal(){document.getElementById('modal').classList.remove('show');}
-
-function setLog(html){document.getElementById('actionLog').innerHTML=html;}
-function addLog(text){
-  const log=document.getElementById('gameLog');
-  const div=document.createElement('div');
-  div.textContent='· '+text;
-  div.style.borderBottom='1px solid rgba(201,168,76,0.08)';
-  div.style.paddingBottom='0.3rem';
-  log.prepend(div);
-  if(log.children.length>20) log.removeChild(log.lastChild);
-}
-
-function init(){
-  placeUnitsOnBoard();
-  renderBoard();
-  addLog("Partida iniciada. ¡Que comiencen las batallas!");
-  setLog(`Es el turno de <span>${state.kingdoms[0].name}</span>. Tira el dado de movimiento.`);
-  window.addEventListener('resize',renderBoard);
-}
-
-init();
+function recSoldier(){const k=G.kingdoms[G.cur];if(k.res<10){setM('Necesitas 10 recursos.');return;}k.res-=10;
+  const s={id:'s'+G.cur+'_'+Date.now(),name:'Soldado',emoji:'⚔️',type:'soldier',atk:4,def:2,pv:8,mpv:8,r:-1,c:-1,placed:false,ki:G.cur,ba:0,bd:0,bp:0};
+  k.units.push(s);addL(`+ Soldado reclutado.`);setM(`<b>Soldado reclutado.</b> Haz clic en él para colocarlo.`);render();}
+function recCollector(){const k=G.kingdoms[G.cur];if(k.res<15){setM('Necesitas 15 recursos.');return;}if(k.col>=3){setM('Máximo 3 recolectores.');return;}k.res-=15;k.col++;addL(`⛏ Recolector asignado.`);setM(`Recolector asignado. Generas <b>+${k.col*5}r/turno</b>.`);render();}
+function drawCard(){const k=G.kingdoms[G.cur];if(k.min<2){setM('Necesitas 2 minerales para robar carta.');return;}k.min-=2;const c={...CARDS[Math.floor(Math.random()*CARDS.length)]};k.cards.push(c);addL(`🃏 Carta: ${c.name}`);setM(`<b>Carta: ${c.name}</b> — ${c.eff}`);rCards();}
+function useC(i){const k=G.kingdoms[G.cur];const c=k.cards[i];c.fn();k.cards.splice(i,1);addL(`🃏 Usó ${c.name}`);setM(`<b>${c.name}</b> usada.`);rCards();rLeft();}
+function switchK(i){G.cur=i;G.selU=null;G.placU=null;document.getElementById('phint').style.display='none';document.querySelectorAll('.k-tab').forEach((el,j)=>el.classList.toggle('active',j===i));render();}
+function gRes(n){G.kingdoms[G.cur].res+=n;setM(`<b>+${n} recursos</b> obtenidos.`);rLeft();}
+function gMov(n){G.movL+=n;setM(`<b>+${n} movimiento</b> extra.`);render();}
+function lMov(){G.movL=0;setM('<b>Movimiento perdido.</b>');render();}
+function buffH(s,n){const h=G.kingdoms[G.cur].units.find(u=>u.type==='hero');if(!h){setM('No hay héroe.');return;}if(s==='atk')h.ba+=n;else if(s==='def')h.bd+=n;else{h.pv+=n;h.mpv+=n;}setM(`<b>${h.name}</b> recibió +${n} ${s.toUpperCase()}.`);render();}
+function portal(){G.movL=99;setM('Portal activado. Mueve tu héroe a cualquier casilla.');render();}
+function setM(h){document.getElementById('lmsg').innerHTML=h;}
+function setI(t){document.getElementById('instr').textContent=t;}
+function addL(t){const l=document.getElementById('glog');const d=document.createElement('div');d.textContent='· '+t;d.style.borderBottom='1px solid rgba(201,168,76,0.06)';d.style.paddingBottom='0.2rem';l.prepend(d);if(l.children.length>30)l.removeChild(l.lastChild);}
+function showM(t,b){document.getElementById('mt').textContent=t;document.getElementById('mb').textContent=b;document.getElementById('modal').classList.add('on');}
+function closeM(){document.getElementById('modal').classList.remove('on');}
+window.addEventListener('resize',rBoard);
+render();
+addL('Partida iniciada. ¡Que comiencen las batallas!');
 </script>
 </body>
 </html>
