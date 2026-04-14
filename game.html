@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALDRIS — Tablero Virtual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=Crimson+Pro:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080810;--bg2:#0e0e1a;--bg3:#13131f;
+  --gold:#c9a84c;--gold-l:#e8c97a;
+  --text:#e8e4d9;--muted:#8a8070;
+  --vael:#7F77DD;--drath:#D85A30;--eth:#1D9E75;--ur:#BA7517;
+  --border:rgba(201,168,76,0.2);
+  --danger:#E24B4A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;display:grid;grid-template-rows:auto 1fr auto;height:100vh;overflow:hidden;}
+
+/* TOP BAR */
+.topbar{background:rgba(8,8,16,0.98);border-bottom:1px solid var(--border);padding:0.5rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;z-index:100;}
+.game-title{font-family:'Cinzel Decorative',serif;font-size:1rem;color:var(--gold);}
+.turn-info{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.2em;color:var(--muted);}
+.turn-info span{color:var(--gold);}
+.phase-badge{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.2em;padding:0.3rem 0.8rem;border:1px solid var(--gold);color:var(--gold);text-transform:uppercase;}
+.back-btn{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;padding:0.3rem 0.8rem;border:1px solid var(--border);color:var(--muted);cursor:pointer;text-decoration:none;text-transform:uppercase;transition:all 0.2s;}
+.back-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* MAIN LAYOUT */
+.game-layout{display:grid;grid-template-columns:220px 1fr 220px;overflow:hidden;height:100%;}
+
+/* SIDE PANELS */
+.side-panel{background:var(--bg2);border-right:1px solid var(--border);padding:0.75rem;overflow-y:auto;display:flex;flex-direction:column;gap:0.75rem;}
+.side-panel.right{border-right:none;border-left:1px solid var(--border);}
+.panel-title{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.3em;color:var(--muted);text-transform:uppercase;padding-bottom:0.5rem;border-bottom:1px solid var(--border);}
+
+/* KINGDOM STATUS */
+.k-status{border:1px solid var(--border);padding:0.75rem;background:rgba(255,255,255,0.02);}
+.k-status.active-turn{border-color:var(--kc);}
+.k-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;}
+.k-name-sm{font-family:'Cinzel',serif;font-size:0.8rem;color:var(--kc);}
+.k-indicator{width:8px;height:8px;border-radius:50%;background:var(--kc);}
+.k-resources{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;}
+.res-item{background:rgba(255,255,255,0.04);padding:0.4rem;text-align:center;}
+.res-val{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);}
+.res-key{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;}
+.hp-bar-wrap{margin-top:0.5rem;}
+.hp-label{font-size:0.65rem;color:var(--muted);margin-bottom:0.2rem;display:flex;justify-content:space-between;}
+.hp-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+.hp-fill{height:100%;background:var(--kc);border-radius:2px;transition:width 0.4s;}
+
+/* BOARD CENTER */
+.board-center{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--bg);}
+
+/* BOARD GRID */
+#gameBoard{position:relative;}
+.board-cell{position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;transition:all 0.2s;border:1px solid rgba(201,168,76,0.08);}
+.board-cell:hover{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.05);}
+.board-cell.selected{border-color:var(--gold);background:rgba(201,168,76,0.1);}
+.board-cell.reachable{border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04);animation:pulse-cell 1s infinite;}
+.board-cell.castle{border-width:2px;}
+.board-cell.mine{border-color:rgba(29,158,117,0.4);}
+.board-cell.trap{border-color:rgba(232,76,74,0.2);}
+.board-cell.boss{border-color:rgba(232,76,74,0.5);background:rgba(232,76,74,0.05);}
+.board-cell.grial{border-color:var(--gold);background:rgba(201,168,76,0.1);animation:pulse-gold 2s infinite;}
+@keyframes pulse-cell{0%,100%{background:rgba(255,255,255,0.02);}50%{background:rgba(255,255,255,0.08);}}
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.3);}50%{box-shadow:0 0 12px 4px rgba(201,168,76,0.15);}}
+
+.cell-unit{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;position:relative;}
+.cell-label{position:absolute;bottom:1px;right:2px;font-size:0.5rem;color:var(--muted);font-family:'Cinzel',serif;}
+
+/* ACTION PANEL */
+.action-panel{background:var(--bg3);border-top:1px solid var(--border);padding:0.75rem 1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.action-btn{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.15em;padding:0.5rem 1rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.action-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.action-btn:disabled{opacity:0.3;cursor:not-allowed;}
+.action-btn.primary{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08);}
+.action-btn.danger{border-color:var(--danger);color:var(--danger);}
+.log-area{flex:1;min-width:200px;}
+.log-text{font-size:0.8rem;color:var(--muted);font-style:italic;}
+.log-text span{color:var(--gold-l);}
+
+/* RIGHT PANEL extras */
+.mini-card{border:1px solid var(--border);padding:0.6rem;background:rgba(255,255,255,0.02);margin-bottom:0.5rem;}
+.mc-title{font-family:'Cinzel',serif;font-size:0.7rem;color:var(--gold);margin-bottom:0.4rem;}
+.mc-body{font-size:0.75rem;color:var(--muted);line-height:1.5;}
+.mc-stats{display:flex;gap:0.5rem;margin-top:0.4rem;flex-wrap:wrap;}
+.mc-stat{font-size:0.65rem;font-family:'Cinzel',serif;color:var(--text);}
+.mc-stat em{color:var(--gold);}
+
+/* DICE UI */
+.dice-ui{display:flex;gap:0.5rem;align-items:center;}
+.mini-die{width:36px;height:36px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:1rem;color:var(--gold);cursor:pointer;transition:all 0.2s;user-select:none;}
+.mini-die:hover{border-color:var(--gold);background:rgba(201,168,76,0.1);}
+.mini-die.rolling{animation:spin 0.4s ease-out;}
+@keyframes spin{0%{transform:rotate(0) scale(1.2);}100%{transform:rotate(360deg) scale(1);}}
+.die-result{font-family:'Cinzel',serif;font-size:0.75rem;color:var(--muted);}
+.die-result span{color:var(--gold-l);font-family:'Cinzel Decorative',serif;font-size:1rem;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border);padding:2rem;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;}
+.modal h3{font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--gold);margin-bottom:1rem;}
+.modal p{font-size:0.9rem;line-height:1.7;color:var(--muted);margin-bottom:1rem;}
+.modal-btns{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.modal-btn{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.15em;padding:0.5rem 1.2rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.modal-btn:hover{border-color:var(--gold);color:var(--gold);}
+.modal-btn.ok{border-color:var(--gold);color:var(--gold);}
+
+@media(max-width:700px){
+  .game-layout{grid-template-columns:1fr;}
+  .side-panel{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="index.html" class="back-btn">← Volver</a>
+  <div class="game-title">✦ VALDRIS</div>
+  <div class="turn-info">Turno <span id="turnNum">1</span> · <span id="currentKingdom">Vael'Khor</span></div>
+  <div class="phase-badge" id="phaseBadge">Fase I — La Gran Guerra</div>
+</div>
+
+<!-- GAME LAYOUT -->
+<div class="game-layout">
+
+  <!-- LEFT PANEL: Kingdoms -->
+  <div class="side-panel" id="leftPanel">
+    <div class="panel-title">Estado de Reinos</div>
+
+    <div class="k-status active-turn" id="kStatus0" style="--kc:var(--vael)">
+      <div class="k-header"><div class="k-name-sm">Vael'Khor</div><div class="k-indicator"></div></div>
+      <div class="k-resources">
+        <div class="res-item"><div class="res-val" id="res0">45</div><div class="res-key">recursos</div></div>
+        <div class="res-item"><div class="res-val" id="min0">3</div><div class="res-key">minerales</div></div>
+        <div class="res-item"><div class="res-val" id="rec0">1</div><div class="res-key">recolect.</div></div>
+        <div class="res-item"><div class="res-val" id="units0">3</div><div class="res-key">unidades</div></div>
+      </div>
+      <div class="hp-bar-wrap">
+        <div class="hp-label"><span>Castillo</span><span id="hp0">100/100</span></div>
+        <div class="hp-bar"><div class="hp-fill" id="hpf0" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="k-status" id="kStatus1" style="--kc:var(--drath)">
+      <div class="k-header"><div class="k-name-sm">Drath'Orn</div><div class="k-indicator"></div></div>
+      <div class="k-resources">
+        <div class="res-item"><div class="res-val" id="res1">45</div><div class="res-key">recursos</div></div>
+        <div class="res-item"><div class="res-val" id="min1">3</div><div class="res-key">minerales</div></div>
+        <div class="res-item"><div class="res-val" id="rec1">1</div><div class="res-key">recolect.</div></div>
+        <div class="res-item"><div class="res-val" id="units1">3</div><div class="res-key">unidades</div></div>
+      </div>
+      <div class="hp-bar-wrap">
+        <div class="hp-label"><span>Castillo</span><span id="hp1">100/100</span></div>
+        <div class="hp-bar"><div class="hp-fill" id="hpf1" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="k-status" id="kStatus2" style="--kc:var(--eth)">
+      <div class="k-header"><div class="k-name-sm">Eth'Sylva</div><div class="k-indicator"></div></div>
+      <div class="k-resources">
+        <div class="res-item"><div class="res-val" id="res2">45</div><div class="res-key">recursos</div></div>
+        <div class="res-item"><div class="res-val" id="min2">3</div><div class="res-key">minerales</div></div>
+        <div class="res-item"><div class="res-val" id="rec2">1</div><div class="res-key">recolect.</div></div>
+        <div class="res-item"><div class="res-val" id="units2">3</div><div class="res-key">unidades</div></div>
+      </div>
+      <div class="hp-bar-wrap">
+        <div class="hp-label"><span>Castillo</span><span id="hp2">100/100</span></div>
+        <div class="hp-bar"><div class="hp-fill" id="hpf2" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="k-status" id="kStatus3" style="--kc:var(--ur)">
+      <div class="k-header"><div class="k-name-sm">Ur'Kaath</div><div class="k-indicator"></div></div>
+      <div class="k-resources">
+        <div class="res-item"><div class="res-val" id="res3">45</div><div class="res-key">recursos</div></div>
+        <div class="res-item"><div class="res-val" id="min3">3</div><div class="res-key">minerales</div></div>
+        <div class="res-item"><div class="res-val" id="rec3">1</div><div class="res-key">recolect.</div></div>
+        <div class="res-item"><div class="res-val" id="units3">3</div><div class="res-key">unidades</div></div>
+      </div>
+      <div class="hp-bar-wrap">
+        <div class="hp-label"><span>Castillo</span><span id="hp3">100/100</span></div>
+        <div class="hp-bar"><div class="hp-fill" id="hpf3" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: Board -->
+  <div class="board-center">
+    <div id="gameBoard"></div>
+  </div>
+
+  <!-- RIGHT PANEL: Selected unit + actions -->
+  <div class="side-panel right" id="rightPanel">
+    <div class="panel-title">Unidad Seleccionada</div>
+
+    <div class="mini-card" id="selectedUnitCard">
+      <div class="mc-title" id="selName">— Ninguna —</div>
+      <div class="mc-body" id="selDesc">Haz clic en una unidad del tablero para ver sus stats.</div>
+      <div class="mc-stats" id="selStats"></div>
+    </div>
+
+    <div class="panel-title" style="margin-top:0.5rem;">Dados</div>
+    <div class="dice-ui">
+      <div>
+        <div class="mini-die" id="gd6" onclick="gameRoll(6)">6</div>
+        <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:2px;">D6</div>
+      </div>
+      <div>
+        <div class="mini-die" id="gd8" onclick="gameRoll(8)">8</div>
+        <div style="font-size:0.6rem;color:var(--muted);text-align:center;margin-top:2px;">D8</div>
+      </div>
+      <div class="die-result" id="gameRollResult">Lanza...</div>
+    </div>
+
+    <div class="panel-title" style="margin-top:0.5rem;">Reglas rápidas</div>
+    <div class="mini-card">
+      <div class="mc-body">
+        <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:0.7rem;">TURNO:</strong><br>
+        1. Tira D6 → mueve unidades<br>
+        2. Recolectores generan recursos<br>
+        3. Ataque si hay enemigo adyacente<br><br>
+        <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:0.7rem;">COMBATE:</strong><br>
+        ATK + D8 vs DEF + D8<br>
+        Diferencia = daño recibido
+      </div>
+    </div>
+
+    <div class="panel-title" style="margin-top:0.5rem;">Registro</div>
+    <div id="gameLog" style="font-size:0.75rem;color:var(--muted);line-height:1.8;"></div>
+  </div>
+
+</div>
+
+<!-- BOTTOM ACTION BAR -->
+<div class="action-panel">
+  <div class="dice-ui">
+    <div class="mini-die" id="movedie" onclick="rollMovement()">?</div>
+    <span style="font-size:0.7rem;color:var(--muted);font-family:'Cinzel',serif;">Tirar movimiento</span>
+  </div>
+  <button class="action-btn primary" onclick="endTurn()">Fin de Turno →</button>
+  <button class="action-btn" onclick="recruitUnit()">+ Reclutar (10r)</button>
+  <button class="action-btn" onclick="assignCollector()">⛏ Asignar Recolector (15r)</button>
+  <button class="action-btn" onclick="buyEquipment()">🧥 Comprar Equipo</button>
+  <button class="action-btn danger" onclick="showRules()">? Reglas</button>
+  <div class="log-area">
+    <div class="log-text" id="actionLog">Selecciona una unidad para comenzar tu turno.</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">Valdris</h3>
+    <p id="modalBody">...</p>
+    <div class="modal-btns">
+      <button class="modal-btn ok" onclick="closeModal()">Continuar</button>
+      <button class="modal-btn" id="modal2btn" onclick="closeModal()" style="display:none">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KINGDOMS = [
+  {name:"Vael'Khor", color:"#7F77DD", emoji:"🔮", atk:8, def:6, pv:25, pos:{row:0,col:5}},
+  {name:"Drath'Orn", color:"#D85A30", emoji:"⚙️", atk:9, def:10, pv:30, pos:{row:10,col:5}},
+  {name:"Eth'Sylva", color:"#1D9E75", emoji:"🌫️", atk:7, def:5, pv:20, pos:{row:5,col:10}},
+  {name:"Ur'Kaath", color:"#BA7517", emoji:"💀", atk:5, def:5, pv:20, pos:{row:5,col:0}},
+];
+const BOARD_SIZE = 11;
+const CELL_SIZE = 48;
+
+let state = {
+  turn: 1,
+  currentKingdom: 0,
+  phase: 1,
+  movesLeft: 0,
+  selectedCell: null,
+  kingdoms: KINGDOMS.map((k,i)=>({
+    ...k, resources:45, minerals:3, collectors:1,
+    castleHp:100, units:[
+      {type:'hero', name: k.name==="Vael'Khor"?"Zhar Vel":k.name==="Drath'Orn"?"Sorra Ign":k.name==="Eth'Sylva"?"Aeon Mir":"Krul Vex",
+       emoji:k.emoji, atk:k.atk, def:k.def, pv:k.pv, maxPv:k.pv, level:1, row:k.pos.row, col:k.pos.col, kingdom:i},
+      {type:'soldier', name:'Soldado', emoji:'⚔️', atk:4, def:2, pv:8, maxPv:8, row:k.pos.row+(i<2?1:-1), col:k.pos.col+(i%2===0?0:1), kingdom:i},
+      {type:'collector', name:'Recolector', emoji:'⛏', atk:1, def:1, pv:5, maxPv:5, row:k.pos.row+(i<2?-1:1), col:k.pos.col+(i%2===0?1:0), kingdom:i},
+    ],
+    alive:true, eliminated:false,
+  })),
+  cells: buildCells(),
+  log: [],
+};
+
+function buildCells(){
+  const cells = [];
+  for(let r=0;r<BOARD_SIZE;r++){
+    cells[r]=[];
+    for(let c=0;c<BOARD_SIZE;c++){
+      let type='path';
+      if(r===0&&c===5) type='castle0';
+      else if(r===10&&c===5) type='castle1';
+      else if(r===5&&c===10) type='castle2';
+      else if(r===5&&c===0) type='castle3';
+      else if((r===2&&c===2)||(r===2&&c===8)||(r===8&&c===2)||(r===8&&c===8)) type='mine';
+      else if(r===5&&c===5) type='grial';
+      else if((r===4&&c===4)||(r===4&&c===6)||(r===6&&c===4)||(r===6&&c===6)) type='boss';
+      else if((r===3&&c===3)||(r===3&&c===7)||(r===7&&c===3)||(r===7&&c===7)) type='trap';
+      else if((r===1&&c===5)||(r===9&&c===5)||(r===5&&c===1)||(r===5&&c===9)) type='altar';
+      cells[r][c]={type, units:[]};
+    }
+  }
+  return cells;
+}
+
+function placeUnitsOnBoard(){
+  state.kingdoms.forEach(k=>{
+    k.units.forEach(u=>{
+      if(u.row>=0&&u.row<BOARD_SIZE&&u.col>=0&&u.col<BOARD_SIZE){
+        state.cells[u.row][u.col].units.push(u);
+      }
+    });
+  });
+}
+
+function renderBoard(){
+  const board = document.getElementById('gameBoard');
+  const bSize = Math.min(window.innerWidth-480, window.innerHeight-140, 520);
+  const cs = Math.floor(bSize/BOARD_SIZE);
+  board.style.width = cs*BOARD_SIZE+'px';
+  board.style.height = cs*BOARD_SIZE+'px';
+  board.style.position='relative';
+  board.innerHTML='';
+
+  for(let r=0;r<BOARD_SIZE;r++){
+    for(let c=0;c<BOARD_SIZE;c++){
+      const cell = state.cells[r][c];
+      const div = document.createElement('div');
+      div.className='board-cell';
+      div.style.cssText=`left:${c*cs}px;top:${r*cs}px;width:${cs}px;height:${cs}px;font-size:${cs*0.45}px;`;
+
+      const typeStyles={
+        castle0:'border-color:rgba(127,119,221,0.6);background:rgba(127,119,221,0.08);',
+        castle1:'border-color:rgba(216,90,48,0.6);background:rgba(216,90,48,0.08);',
+        castle2:'border-color:rgba(29,158,117,0.6);background:rgba(29,158,117,0.08);',
+        castle3:'border-color:rgba(186,117,23,0.6);background:rgba(186,117,23,0.08);',
+        mine:'border-color:rgba(29,158,117,0.4);background:rgba(29,158,117,0.03);',
+        grial:'border-color:#c9a84c;background:rgba(201,168,76,0.1);',
+        boss:'border-color:rgba(232,76,74,0.4);background:rgba(232,76,74,0.04);',
+        trap:'border-color:rgba(232,76,74,0.15);',
+        altar:'border-color:rgba(127,119,221,0.3);',
+      };
+      if(typeStyles[cell.type]) div.style.cssText+=typeStyles[cell.type];
+
+      if(state.selectedCell&&state.selectedCell.r===r&&state.selectedCell.c===c) div.classList.add('selected');
+
+      const icons={mine:'⛏',grial:'✦',boss:'☠',trap:'⚠',altar:'△',castle0:'🏰',castle1:'🏯',castle2:'🗼',castle3:'⛩'};
+      if(cell.units.length>0){
+        const u=cell.units[0];
+        div.innerHTML=`<span title="${u.name} (${u.pv}/${u.maxPv} PV)">${u.emoji}</span>`;
+        if(cell.units.length>1) div.innerHTML+=`<div class="cell-label">+${cell.units.length-1}</div>`;
+      } else if(icons[cell.type]){
+        div.innerHTML=`<span style="opacity:0.4;font-size:${cs*0.35}px">${icons[cell.type]}</span>`;
+      }
+
+      div.addEventListener('click',()=>selectCell(r,c));
+      board.appendChild(div);
+    }
+  }
+}
+
+function selectCell(r,c){
+  const cell=state.cells[r][c];
+  state.selectedCell={r,c};
+  const myUnits=cell.units.filter(u=>u.kingdom===state.currentKingdom);
+  const selName=document.getElementById('selName');
+  const selDesc=document.getElementById('selDesc');
+  const selStats=document.getElementById('selStats');
+
+  if(myUnits.length>0){
+    const u=myUnits[0];
+    selName.textContent=u.name;
+    selDesc.textContent=`${state.kingdoms[u.kingdom].name} · ${u.type==='hero'?'Héroe':u.type==='collector'?'Recolector':'Soldado'}`;
+    selStats.innerHTML=`
+      <div class="mc-stat">ATK <em>${u.atk}</em></div>
+      <div class="mc-stat">DEF <em>${u.def}</em></div>
+      <div class="mc-stat">PV <em>${u.pv}/${u.maxPv}</em></div>
+      ${u.level?`<div class="mc-stat">Nv <em>${u.level}</em></div>`:''}
+    `;
+    setLog(`${u.name} seleccionado. ATK:${u.atk} DEF:${u.def} PV:${u.pv}/${u.maxPv}`);
+  } else if(cell.units.length>0){
+    const u=cell.units[0];
+    selName.textContent=`${u.name} (enemigo)`;
+    selDesc.textContent=state.kingdoms[u.kingdom].name;
+    selStats.innerHTML=`<div class="mc-stat">PV <em>${u.pv}/${u.maxPv}</em></div>`;
+    setLog(`Unidad enemiga: ${u.name} de ${state.kingdoms[u.kingdom].name}`);
+  } else {
+    selName.textContent=`Casilla [${r},${c}]`;
+    const typeNames={mine:'⛏ Mina de recursos',grial:'✦ El Grial Eterno',boss:'☠ Zona de Jefe',trap:'⚠ Trampa',altar:'△ Altar',path:'Camino',
+      castle0:"Castillo Vael'Khor",castle1:"Castillo Drath'Orn",castle2:"Castillo Eth'Sylva",castle3:"Castillo Ur'Kaath"};
+    selDesc.textContent=typeNames[cell.type]||'Casilla vacía';
+    selStats.innerHTML='';
+    setLog(`Casilla: ${typeNames[cell.type]||'camino'}`);
+  }
+  renderBoard();
+}
+
+function rollMovement(){
+  const die=document.getElementById('movedie');
+  die.classList.remove('rolling');
+  void die.offsetWidth;
+  die.classList.add('rolling');
+  let v;
+  const iv=setInterval(()=>{v=Math.floor(Math.random()*6)+1;die.textContent=v;},60);
+  setTimeout(()=>{
+    clearInterval(iv);
+    v=Math.floor(Math.random()*6)+1;
+    die.textContent=v;
+    state.movesLeft=v;
+    setLog(`🎲 Dado de movimiento: <span>${v}</span> casillas disponibles.`);
+    addLog(`Turno ${state.turn}: ${state.kingdoms[state.currentKingdom].name} tiró ${v}.`);
+    die.classList.remove('rolling');
+  },400);
+}
+
+function gameRoll(faces){
+  const id='gd'+faces;
+  const el=document.getElementById(id);
+  el.classList.remove('rolling');
+  void el.offsetWidth;
+  el.classList.add('rolling');
+  let v;
+  const iv=setInterval(()=>{v=Math.floor(Math.random()*faces)+1;el.textContent=v;},60);
+  setTimeout(()=>{
+    clearInterval(iv);
+    v=Math.floor(Math.random()*faces)+1;
+    el.textContent=v;
+    document.getElementById('gameRollResult').innerHTML=`= <span>${v}</span>`;
+    el.classList.remove('rolling');
+  },400);
+}
+
+function endTurn(){
+  const k=state.kingdoms[state.currentKingdom];
+  const income=5+k.collectors*5;
+  k.resources+=income;
+  k.minerals+=k.collectors;
+  document.getElementById('res'+state.currentKingdom).textContent=k.resources;
+  document.getElementById('min'+state.currentKingdom).textContent=k.minerals;
+
+  addLog(`${k.name} recibe +${income} recursos, +${k.collectors} minerales.`);
+  setLog(`Fin del turno de <span>${k.name}</span>. +${income} recursos generados.`);
+
+  let next=(state.currentKingdom+1)%4;
+  let tries=0;
+  while(state.kingdoms[next].eliminated&&tries<4){next=(next+1)%4;tries++;}
+
+  if(tries>=4){showModal('¡Victoria!','Solo queda un reino en pie. La segunda fase comienza.');return;}
+
+  state.currentKingdom=next;
+  if(next===0) state.turn++;
+
+  document.getElementById('turnNum').textContent=state.turn;
+  document.getElementById('currentKingdom').textContent=state.kingdoms[next].name;
+
+  document.querySelectorAll('.k-status').forEach((el,i)=>{
+    el.classList.toggle('active-turn',i===next);
+  });
+  document.getElementById('movedie').textContent='?';
+  state.movesLeft=0;
+  state.selectedCell=null;
+  renderBoard();
+}
+
+function recruitUnit(){
+  const k=state.kingdoms[state.currentKingdom];
+  if(k.resources<10){setLog('No tienes recursos suficientes para reclutar (necesitas 10).');return;}
+  k.resources-=10;
+  k.units.push({type:'soldier',name:'Soldado',emoji:'⚔️',atk:4,def:2,pv:8,maxPv:8,
+    row:k.units[0].row,col:k.units[0].col,kingdom:state.currentKingdom});
+  document.getElementById('res'+state.currentKingdom).textContent=k.resources;
+  document.getElementById('units'+state.currentKingdom).textContent=k.units.length;
+  setLog(`Soldado reclutado para ${k.name}. Recursos: ${k.resources}`);
+  addLog(`${k.name} reclutó un soldado.`);
+}
+
+function assignCollector(){
+  const k=state.kingdoms[state.currentKingdom];
+  if(k.resources<15){setLog('Necesitas 15 recursos para asignar un recolector.');return;}
+  if(k.collectors>=3){setLog('Ya tienes el máximo de 3 recolectores activos.');return;}
+  k.resources-=15;
+  k.collectors++;
+  document.getElementById('res'+state.currentKingdom).textContent=k.resources;
+  document.getElementById('rec'+state.currentKingdom).textContent=k.collectors;
+  setLog(`Recolector asignado. Ahora tienes ${k.collectors} activos. +${k.collectors*5} recursos/turno.`);
+}
+
+function buyEquipment(){
+  const k=state.kingdoms[state.currentKingdom];
+  if(k.minerals<8){setLog('Necesitas al menos 8 minerales para comprar equipo.');return;}
+  const items=[
+    {name:'Capa de Sombra',cost:8,effect:'+2 DEF permanente'},
+    {name:'Casco de Acero Cósmico',cost:12,effect:'+3 DEF, -50% daño en área'},
+    {name:'Medalla de Valor',cost:10,effect:'+5 PV máximos'},
+    {name:'Espada de Cristal',cost:15,effect:'+4 ATK'},
+  ];
+  const affordable=items.filter(i=>i.cost<=k.minerals);
+  if(affordable.length===0){setLog('No tienes minerales suficientes para ningún equipo.');return;}
+  const item=affordable[Math.floor(Math.random()*affordable.length)];
+  k.minerals-=item.cost;
+  document.getElementById('min'+state.currentKingdom).textContent=k.minerals;
+  showModal(`Equipo adquirido: ${item.name}`,`Efecto: ${item.effect}\n\nCosto: ${item.cost} minerales. Minerales restantes: ${k.minerals}`);
+  addLog(`${k.name} compró ${item.name}.`);
+}
+
+function showRules(){
+  showModal('Reglas de Valdris',
+    `TURNO:\n1. Tira el D6 (movimiento)\n2. Mueve tus unidades\n3. Los recolectores generan recursos automáticamente al fin del turno\n\nCOMBATE:\nATK + D8 vs DEF + D8 → diferencia = daño\n\nRECURSOS:\nRecolector básico: +5/turno\nCon edificio: +10/turno\nCon héroe adyacente: +15/turno\n\nVICTORIA FASE I:\nCaptura el castillo enemigo llegando a él. Absorbes sus recursos.\n\nFASE II:\nDerrota los 4 jefes del núcleo y recoge los Fragmentos del Grial para revelar la carta sellada.`
+  );
+}
+
+function showModal(title,body){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').textContent=body;
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+
+function setLog(html){document.getElementById('actionLog').innerHTML=html;}
+function addLog(text){
+  const log=document.getElementById('gameLog');
+  const div=document.createElement('div');
+  div.textContent='· '+text;
+  div.style.borderBottom='1px solid rgba(201,168,76,0.08)';
+  div.style.paddingBottom='0.3rem';
+  log.prepend(div);
+  if(log.children.length>20) log.removeChild(log.lastChild);
+}
+
+function init(){
+  placeUnitsOnBoard();
+  renderBoard();
+  addLog("Partida iniciada. ¡Que comiencen las batallas!");
+  setLog(`Es el turno de <span>${state.kingdoms[0].name}</span>. Tira el dado de movimiento.`);
+  window.addEventListener('resize',renderBoard);
+}
+
+init();
+</script>
+</body>
+</html>

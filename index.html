@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALDRIS — El Juego de los 4 Reinos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --vael: #7F77DD;
+  --vael-dark: #3C3489;
+  --drath: #D85A30;
+  --drath-dark: #712B13;
+  --eth: #1D9E75;
+  --eth-dark: #085041;
+  --ur: #BA7517;
+  --ur-dark: #633806;
+  --bg: #080810;
+  --bg2: #0e0e1a;
+  --bg3: #13131f;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --text: #e8e4d9;
+  --text-muted: #8a8070;
+  --border: rgba(201,168,76,0.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;overflow-x:hidden;}
+
+/* PARTICLES BG */
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d) infinite alternate;}
+@keyframes twinkle{0%{opacity:0.1;}100%{opacity:0.8;}}
+
+/* HEADER */
+header{position:relative;z-index:10;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
+header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(127,119,221,0.15) 0%,transparent 70%);}
+.logo-rune{font-size:4rem;margin-bottom:1rem;animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+h1.title{font-family:'Cinzel Decorative',serif;font-size:clamp(2.5rem,8vw,6rem);font-weight:900;letter-spacing:0.15em;background:linear-gradient(135deg,var(--gold-light),var(--gold),#8B6914);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;text-shadow:none;}
+.subtitle{font-family:'Cinzel',serif;font-size:clamp(0.9rem,2vw,1.2rem);letter-spacing:0.4em;color:var(--text-muted);margin-top:1rem;text-transform:uppercase;}
+.tagline{font-size:1.2rem;color:rgba(232,228,217,0.6);margin-top:1.5rem;font-style:italic;font-weight:300;}
+.cta-row{display:flex;gap:1rem;margin-top:3rem;flex-wrap:wrap;justify-content:center;}
+.btn{font-family:'Cinzel',serif;letter-spacing:0.15em;font-size:0.85rem;padding:0.9rem 2rem;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer;transition:all 0.3s;text-decoration:none;text-transform:uppercase;}
+.btn:hover{background:var(--gold);color:var(--bg);transform:translateY(-2px);}
+.btn-primary{background:rgba(201,168,76,0.15);}
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);color:var(--text-muted);font-size:0.8rem;letter-spacing:0.3em;animation:bounce 2s infinite;}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(6px);}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(8,8,16,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 2rem;}
+nav ul{display:flex;list-style:none;gap:0;justify-content:center;flex-wrap:wrap;}
+nav a{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.2em;color:var(--text-muted);text-decoration:none;padding:1rem 1.2rem;display:block;transition:color 0.3s;text-transform:uppercase;}
+nav a:hover{color:var(--gold);}
+
+/* SECTIONS */
+section{position:relative;z-index:5;padding:6rem 2rem;}
+.container{max-width:1100px;margin:0 auto;}
+.section-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,4vw,2.5rem);color:var(--gold);text-align:center;margin-bottom:0.5rem;}
+.section-sub{font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.4em;color:var(--text-muted);text-align:center;margin-bottom:4rem;text-transform:uppercase;}
+.divider{width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1.5rem auto;}
+
+/* LORE */
+#lore{background:var(--bg);}
+.lore-text{max-width:700px;margin:0 auto;text-align:center;font-size:1.15rem;line-height:2;color:rgba(232,228,217,0.85);font-weight:300;}
+.lore-text em{color:var(--gold-light);font-style:normal;}
+
+/* REINOS */
+#reinos{background:var(--bg2);}
+.kingdoms-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;}
+.kingdom-card{border:1px solid var(--border);background:rgba(255,255,255,0.02);padding:2rem;position:relative;overflow:hidden;transition:transform 0.3s,border-color 0.3s;cursor:pointer;}
+.kingdom-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kcolor);}
+.kingdom-card::after{content:'';position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at top,var(--kcolor-alpha) 0%,transparent 70%);transition:opacity 0.3s;}
+.kingdom-card:hover{transform:translateY(-4px);border-color:var(--kcolor);}
+.kingdom-card:hover::after{opacity:1;}
+.k-symbol{font-size:3rem;margin-bottom:1rem;display:block;}
+.k-name{font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--kcolor);margin-bottom:0.25rem;}
+.k-epithet{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1rem;}
+.k-desc{font-size:0.95rem;line-height:1.7;color:rgba(232,228,217,0.7);font-weight:300;}
+.k-stats{display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;}
+.k-stat{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;color:var(--text-muted);}
+.k-stat span{color:var(--kcolor);font-weight:600;}
+
+.k-vael{--kcolor:var(--vael);--kcolor-alpha:rgba(127,119,221,0.08);}
+.k-drath{--kcolor:var(--drath);--kcolor-alpha:rgba(216,90,48,0.08);}
+.k-eth{--kcolor:var(--eth);--kcolor-alpha:rgba(29,158,117,0.08);}
+.k-ur{--kcolor:var(--ur);--kcolor-alpha:rgba(186,117,23,0.08);}
+
+/* TABLERO PREVIEW */
+#tablero{background:var(--bg3);}
+.board-preview{display:flex;justify-content:center;margin-bottom:3rem;}
+.board-svg-wrap{position:relative;}
+.play-btn{display:inline-flex;align-items:center;gap:0.75rem;font-family:'Cinzel',serif;font-size:0.85rem;letter-spacing:0.2em;padding:1rem 2.5rem;border:1px solid var(--gold);background:rgba(201,168,76,0.1);color:var(--gold);cursor:pointer;transition:all 0.3s;text-decoration:none;text-transform:uppercase;margin:0 auto;display:flex;width:fit-content;}
+.play-btn:hover{background:var(--gold);color:var(--bg);}
+.play-icon{width:0;height:0;border-left:10px solid currentColor;border-top:6px solid transparent;border-bottom:6px solid transparent;}
+
+/* EJERCITO */
+#ejercito{background:var(--bg);}
+.army-tiers{display:grid;gap:1.5rem;}
+.tier-card{display:grid;grid-template-columns:auto 1fr auto;gap:2rem;align-items:center;border:1px solid var(--border);background:rgba(255,255,255,0.02);padding:2rem;transition:border-color 0.3s;}
+.tier-card:hover{border-color:rgba(201,168,76,0.4);}
+.tier-num{font-family:'Cinzel Decorative',serif;font-size:3rem;color:rgba(201,168,76,0.2);}
+.tier-info h3{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);margin-bottom:0.5rem;}
+.tier-info p{font-size:0.95rem;line-height:1.7;color:rgba(232,228,217,0.7);}
+.tier-cost{font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.1em;color:var(--text-muted);text-align:right;white-space:nowrap;}
+.tier-cost span{display:block;font-size:1.5rem;color:var(--gold);font-family:'Cinzel Decorative',serif;}
+
+/* CARTAS */
+#cartas{background:var(--bg2);}
+.cards-showcase{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;}
+.game-card{border:1px solid var(--border);background:var(--bg3);padding:1.25rem;aspect-ratio:2/3;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform 0.3s;}
+.game-card:hover{transform:translateY(-6px) rotate(1deg);}
+.game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--ccolor,var(--gold));}
+.card-type{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.3em;color:var(--text-muted);text-transform:uppercase;margin-bottom:0.75rem;}
+.card-name{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--text);line-height:1.3;margin-bottom:0.5rem;}
+.card-icon{font-size:2.5rem;text-align:center;margin:auto 0;display:block;}
+.card-effect{font-size:0.75rem;color:rgba(232,228,217,0.6);line-height:1.5;margin-top:auto;}
+.card-cost{font-family:'Cinzel',serif;font-size:0.7rem;color:var(--gold);margin-top:0.5rem;}
+
+/* BESTIARIO */
+#bestiario{background:var(--bg3);}
+.bestiary-zones{display:grid;gap:2rem;}
+.zone-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;}
+.zone-badge{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.3em;padding:0.4rem 1rem;border:1px solid currentColor;text-transform:uppercase;}
+.zone-ext{color:var(--eth);}
+.zone-med{color:var(--ur);}
+.zone-core{color:var(--drath);}
+.beasts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
+.beast-card{border:1px solid var(--border);background:rgba(255,255,255,0.02);padding:1.25rem;transition:border-color 0.3s;}
+.beast-card:hover{border-color:rgba(201,168,76,0.3);}
+.beast-name{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--text);margin-bottom:0.25rem;}
+.beast-icon{font-size:2rem;float:right;margin-left:0.5rem;}
+.beast-stats{font-size:0.75rem;color:var(--text-muted);margin:0.5rem 0;}
+.beast-stats span{color:var(--gold);}
+.beast-ability{font-size:0.8rem;color:rgba(232,228,217,0.6);line-height:1.5;}
+
+/* HEROES */
+#heroes{background:var(--bg);}
+.heroes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;}
+.hero-card{border:1px solid var(--border);background:rgba(255,255,255,0.02);padding:2rem;position:relative;overflow:hidden;}
+.hero-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--hcolor);}
+.hero-kingdom{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.4em;text-transform:uppercase;color:var(--hcolor);margin-bottom:0.5rem;}
+.hero-name{font-family:'Cinzel Decorative',serif;font-size:1.3rem;color:var(--text);margin-bottom:1.5rem;line-height:1.2;}
+.hero-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1.5rem;}
+.hstat{background:rgba(255,255,255,0.04);padding:0.75rem;text-align:center;}
+.hstat-val{font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:var(--hcolor);}
+.hstat-key{font-size:0.65rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;}
+.hero-power{font-size:0.85rem;color:rgba(232,228,217,0.7);line-height:1.6;border-left:2px solid var(--hcolor);padding-left:0.75rem;}
+.hero-levels{display:flex;gap:0.3rem;margin-top:1rem;}
+.lvl-dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--hcolor);}
+.lvl-dot.active{background:var(--hcolor);}
+
+/* DADOS */
+#dados{background:var(--bg2);}
+.dice-area{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:3rem;}
+.die{width:80px;height:80px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative',serif;font-size:2rem;color:var(--gold);cursor:pointer;transition:all 0.2s;position:relative;user-select:none;}
+.die:hover{border-color:var(--gold);transform:scale(1.05);}
+.die.rolling{animation:rollDie 0.5s ease-out;}
+@keyframes rollDie{0%{transform:rotate(0) scale(1);}25%{transform:rotate(180deg) scale(1.2);}100%{transform:rotate(360deg) scale(1);}}
+.dice-label{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:var(--text-muted);text-align:center;margin-top:0.5rem;text-transform:uppercase;}
+.dice-result{text-align:center;font-family:'Cinzel',serif;font-size:1rem;color:var(--text-muted);min-height:2rem;}
+.dice-result span{color:var(--gold-light);font-family:'Cinzel Decorative',serif;font-size:1.5rem;}
+
+/* FASES */
+#fases{background:var(--bg3);}
+.phases-timeline{display:grid;grid-template-columns:1fr auto 1fr;gap:2rem;align-items:center;max-width:800px;margin:0 auto;}
+.phase-block{border:1px solid var(--border);background:rgba(255,255,255,0.02);padding:2rem;}
+.phase-num{font-family:'Cinzel Decorative',serif;font-size:4rem;color:rgba(201,168,76,0.15);line-height:1;}
+.phase-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);margin-bottom:0.75rem;}
+.phase-desc{font-size:0.9rem;line-height:1.7;color:rgba(232,228,217,0.7);}
+.phase-arrow{font-size:2rem;color:var(--gold);text-align:center;}
+
+/* GRIAL */
+#grial{background:var(--bg);text-align:center;padding:8rem 2rem;}
+.grial-symbol{font-size:5rem;animation:pulse 3s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.6;transform:scale(1);}50%{opacity:1;transform:scale(1.1);}}
+.grial-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,4vw,3rem);color:var(--gold);margin:1.5rem 0 1rem;}
+.grial-text{max-width:600px;margin:0 auto;font-size:1.1rem;line-height:1.9;color:rgba(232,228,217,0.7);font-style:italic;}
+.sealed{display:inline-block;margin-top:2rem;border:1px solid var(--drath);padding:0.75rem 2rem;font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.3em;color:var(--drath);text-transform:uppercase;}
+
+/* FOOTER */
+footer{background:var(--bg);border-top:1px solid var(--border);padding:3rem 2rem;text-align:center;}
+.footer-logo{font-family:'Cinzel Decorative',serif;font-size:1.5rem;color:var(--gold);margin-bottom:1rem;}
+.footer-links{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;}
+.footer-links a{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.2em;color:var(--text-muted);text-decoration:none;text-transform:uppercase;transition:color 0.3s;}
+.footer-links a:hover{color:var(--gold);}
+.footer-copy{font-size:0.85rem;color:rgba(138,128,112,0.5);}
+
+@media(max-width:600px){
+  .tier-card{grid-template-columns:1fr;gap:1rem;}
+  .phases-timeline{grid-template-columns:1fr;gap:1rem;}
+  .phase-arrow{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<!-- HERO -->
+<header>
+  <div class="logo-rune">✦</div>
+  <h1 class="title">VALDRIS</h1>
+  <p class="subtitle">El juego de los cuatro reinos</p>
+  <p class="tagline">Conquista. Devora. Asciende. Obtén el Grial.</p>
+  <div class="cta-row">
+    <a href="game.html" class="btn btn-primary">▶ Jugar ahora</a>
+    <a href="#reinos" class="btn">Los 4 Reinos</a>
+    <a href="#bestiario" class="btn">Bestiario</a>
+  </div>
+  <p class="scroll-hint">▼ descender ▼</p>
+</header>
+
+<!-- NAV -->
+<nav>
+  <ul>
+    <li><a href="#lore">Lore</a></li>
+    <li><a href="#reinos">Reinos</a></li>
+    <li><a href="#tablero">Tablero</a></li>
+    <li><a href="#ejercito">Ejército</a></li>
+    <li><a href="#heroes">Héroes</a></li>
+    <li><a href="#cartas">Cartas</a></li>
+    <li><a href="#bestiario">Bestiario</a></li>
+    <li><a href="#dados">Dados</a></li>
+    <li><a href="#fases">Fases</a></li>
+    <li><a href="#grial">El Grial</a></li>
+    <li><a href="game.html" style="color:var(--gold)">⚔ Jugar</a></li>
+  </ul>
+</nav>
+
+<!-- LORE -->
+<section id="lore">
+  <div class="container">
+    <h2 class="section-title">El Mundo de Valdris</h2>
+    <div class="divider"></div>
+    <p class="lore-text">
+      Hace mil años, una <em>grieta cósmica</em> desgarró el cielo de Valdris. De ella emergieron cuatro formas de energía pura — incompatibles, irreconciliables. Cuatro grupos de sobrevivientes las absorbieron y se convirtieron en algo más que humanos.<br><br>
+      Durante siglos coexistieron en tensión frágil. Hasta que la profecía del <em>Grial Eterno</em> rompió el equilibrio. Un artefacto de poder absoluto duerme en el núcleo del mundo, protegido por guardianes que ni los dioses se atrevieron a enfrentar.<br><br>
+      <em>Quien obtenga el Grial, gobernará Valdris para siempre.</em> O eso dice la profecía. Nadie sabe lo que ocurrirá cuando alguien lo toque.
+    </p>
+  </div>
+</section>
+
+<!-- REINOS -->
+<section id="reinos">
+  <div class="container">
+    <h2 class="section-title">Los Cuatro Reinos</h2>
+    <p class="section-sub">Cuatro orígenes. Cuatro destinos. Un solo trono.</p>
+    <div class="kingdoms-grid">
+      <div class="kingdom-card k-vael" onclick="location.href='game.html'">
+        <span class="k-symbol">🔮</span>
+        <div class="k-name">Vael'Khor</div>
+        <div class="k-epithet">Los Tejedores de Sombra · Norte</div>
+        <p class="k-desc">Maestros de la energía psiónica. Sus guerreros no usan armas físicas — usan mentes. El Rey Zhar Vel lleva trescientos años sin dormir, tejiendo planes dentro de planes.</p>
+        <div class="k-stats">
+          <div class="k-stat">ATK <span>8</span></div>
+          <div class="k-stat">DEF <span>6</span></div>
+          <div class="k-stat">PV <span>25</span></div>
+        </div>
+      </div>
+      <div class="kingdom-card k-drath" onclick="location.href='game.html'">
+        <span class="k-symbol">⚙️</span>
+        <div class="k-name">Drath'Orn</div>
+        <div class="k-epithet">Los Forjados en Llama · Sur</div>
+        <p class="k-desc">Guerreros que fusionan metal y carne. La Reina Sorra Ign comanda un ejército de seres parcialmente mecanizados con acero cósmico soldado al cuerpo.</p>
+        <div class="k-stats">
+          <div class="k-stat">ATK <span>9</span></div>
+          <div class="k-stat">DEF <span>10</span></div>
+          <div class="k-stat">PV <span>30</span></div>
+        </div>
+      </div>
+      <div class="kingdom-card k-eth" onclick="location.href='game.html'">
+        <span class="k-symbol">🌫️</span>
+        <div class="k-name">Eth'Sylva</div>
+        <div class="k-epithet">Los Sin Forma · Este</div>
+        <p class="k-desc">Se disuelven en niebla, atraviesan muros, resurgen donde nadie espera. El Rey Aeon Mir habita tres cuerpos simultáneamente. Imposible de matar de un solo golpe.</p>
+        <div class="k-stats">
+          <div class="k-stat">ATK <span>7</span></div>
+          <div class="k-stat">DEF <span>5</span></div>
+          <div class="k-stat">PV <span>20×3</span></div>
+        </div>
+      </div>
+      <div class="kingdom-card k-ur" onclick="location.href='game.html'">
+        <span class="k-symbol">💀</span>
+        <div class="k-name">Ur'Kaath</div>
+        <div class="k-epithet">Los Devoradores · Oeste</div>
+        <p class="k-desc">Absorben los poderes de los enemigos caídos. El Rey Krul Vex empezó siendo el más débil. Ahora es el más temido. Mientras más destruye, más poderoso se vuelve.</p>
+        <div class="k-stats">
+          <div class="k-stat">ATK <span>5+</span></div>
+          <div class="k-stat">DEF <span>5+</span></div>
+          <div class="k-stat">PV <span>20+</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TABLERO -->
+<section id="tablero">
+  <div class="container">
+    <h2 class="section-title">El Tablero</h2>
+    <p class="section-sub">Rombo cósmico · 3 zonas · 1 núcleo</p>
+    <div class="board-preview">
+      <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- Grid lines -->
+        <line x1="180" y1="30" x2="330" y2="180" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+        <line x1="330" y1="180" x2="180" y2="330" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+        <line x1="180" y1="330" x2="30" y2="180" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+        <line x1="30" y1="180" x2="180" y2="30" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+        <line x1="180" y1="30" x2="180" y2="330" stroke="rgba(201,168,76,0.08)" stroke-width="1" stroke-dasharray="4,4"/>
+        <line x1="30" y1="180" x2="330" y2="180" stroke="rgba(201,168,76,0.08)" stroke-width="1" stroke-dasharray="4,4"/>
+        <!-- Zone rings -->
+        <polygon points="180,60 300,180 180,300 60,180" fill="none" stroke="rgba(201,168,76,0.12)" stroke-width="1"/>
+        <polygon points="180,110 250,180 180,250 110,180" fill="none" stroke="rgba(201,168,76,0.18)" stroke-width="1"/>
+        <!-- Mines -->
+        <circle cx="130" cy="130" r="8" fill="rgba(29,158,117,0.3)" stroke="#1D9E75" stroke-width="1"/>
+        <circle cx="230" cy="130" r="8" fill="rgba(29,158,117,0.3)" stroke="#1D9E75" stroke-width="1"/>
+        <circle cx="130" cy="230" r="8" fill="rgba(29,158,117,0.3)" stroke="#1D9E75" stroke-width="1"/>
+        <circle cx="230" cy="230" r="8" fill="rgba(29,158,117,0.3)" stroke="#1D9E75" stroke-width="1"/>
+        <!-- Castle NORTH - Vael'Khor -->
+        <rect x="155" y="10" width="50" height="40" rx="3" fill="rgba(127,119,221,0.2)" stroke="#7F77DD" stroke-width="1.5"/>
+        <text x="180" y="35" text-anchor="middle" font-family="Cinzel" font-size="8" fill="#7F77DD">VAEL'KHOR</text>
+        <!-- Castle SOUTH - Drath'Orn -->
+        <rect x="155" y="310" width="50" height="40" rx="3" fill="rgba(216,90,48,0.2)" stroke="#D85A30" stroke-width="1.5"/>
+        <text x="180" y="335" text-anchor="middle" font-family="Cinzel" font-size="8" fill="#D85A30">DRATH'ORN</text>
+        <!-- Castle EAST - Eth'Sylva -->
+        <rect x="310" y="155" width="45" height="50" rx="3" fill="rgba(29,158,117,0.2)" stroke="#1D9E75" stroke-width="1.5"/>
+        <text x="332" y="178" text-anchor="middle" font-family="Cinzel" font-size="7" fill="#1D9E75">ETH</text>
+        <text x="332" y="190" text-anchor="middle" font-family="Cinzel" font-size="7" fill="#1D9E75">SYLVA</text>
+        <!-- Castle WEST - Ur'Kaath -->
+        <rect x="5" y="155" width="45" height="50" rx="3" fill="rgba(186,117,23,0.2)" stroke="#BA7517" stroke-width="1.5"/>
+        <text x="27" y="178" text-anchor="middle" font-family="Cinzel" font-size="7" fill="#BA7517">UR'</text>
+        <text x="27" y="190" text-anchor="middle" font-family="Cinzel" font-size="7" fill="#BA7517">KAATH</text>
+        <!-- Bosses -->
+        <circle cx="150" cy="155" r="12" fill="rgba(232,76,74,0.2)" stroke="#E24B4A" stroke-width="1" stroke-dasharray="3,2"/>
+        <circle cx="210" cy="155" r="12" fill="rgba(232,76,74,0.2)" stroke="#E24B4A" stroke-width="1" stroke-dasharray="3,2"/>
+        <circle cx="150" cy="210" r="12" fill="rgba(232,76,74,0.2)" stroke="#E24B4A" stroke-width="1" stroke-dasharray="3,2"/>
+        <circle cx="210" cy="210" r="12" fill="rgba(232,76,74,0.2)" stroke="#E24B4A" stroke-width="1" stroke-dasharray="3,2"/>
+        <!-- Grial center -->
+        <circle cx="180" cy="180" r="20" fill="rgba(201,168,76,0.15)" stroke="#c9a84c" stroke-width="2" filter="url(#glow)"/>
+        <text x="180" y="185" text-anchor="middle" font-family="Cinzel Decorative" font-size="14" fill="#c9a84c">✦</text>
+      </svg>
+    </div>
+    <div style="text-align:center">
+      <a href="game.html" class="play-btn">
+        <span class="play-icon"></span>
+        Abrir tablero interactivo
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- EJERCITO -->
+<section id="ejercito">
+  <div class="container">
+    <h2 class="section-title">Estructura del Ejército</h2>
+    <p class="section-sub">Tres categorías + recolectores de recursos</p>
+    <div class="army-tiers">
+      <div class="tier-card">
+        <div class="tier-num">I</div>
+        <div class="tier-info">
+          <h3>Soldados de Infantería</h3>
+          <p>Tropa base. Sin poderes especiales. Sirven para ocupar casillas, extraer recursos y defender bases. Rápidos de reclutar y prescindibles en batalla.</p>
+        </div>
+        <div class="tier-cost"><span>10</span>recursos · PV 8</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-num">II</div>
+        <div class="tier-info">
+          <h3>Infantería Mecánica / Naves</h3>
+          <p>Unidades mecanizadas o aeronaves. Más potentes, requieren mantenimiento. Equipables con blindaje, munición especial y módulos de mejora intercambiables.</p>
+        </div>
+        <div class="tier-cost"><span>30</span>recursos · PV 15</div>
+      </div>
+      <div class="tier-card" style="border-color:rgba(201,168,76,0.3)">
+        <div class="tier-num" style="color:rgba(201,168,76,0.4)">III</div>
+        <div class="tier-info">
+          <h3>Héroes — Únicos por Reino</h3>
+          <p>Poderes activos y pasivos. Suben de nivel del 1 al 5 durante el juego, desbloqueando habilidades únicas. Cada uno tiene su ficha propia de seguimiento.</p>
+        </div>
+        <div class="tier-cost"><span>60</span>recursos · PV 25+nivel</div>
+      </div>
+      <div class="tier-card" style="border-color:rgba(29,158,117,0.3)">
+        <div class="tier-num" style="color:rgba(29,158,117,0.3)">⛏</div>
+        <div class="tier-info">
+          <h3>Recolector de Recursos</h3>
+          <p>Se asigna a una mina y queda fijo. Genera recursos pasivos cada turno y permite robar cartas del mazo de minerales. Máximo 3 activos simultáneos por reino.</p>
+        </div>
+        <div class="tier-cost"><span>15</span>recursos · +5–15/turno</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HEROES -->
+<section id="heroes">
+  <div class="container">
+    <h2 class="section-title">Los Héroes</h2>
+    <p class="section-sub">Únicos · Poderosos · Evolucionan en batalla</p>
+    <div class="heroes-grid">
+      <div class="hero-card" style="--hcolor:var(--vael)">
+        <div class="hero-kingdom">Vael'Khor · Rey</div>
+        <div class="hero-name">Zhar Vel</div>
+        <div class="hero-stats-row">
+          <div class="hstat"><div class="hstat-val">8</div><div class="hstat-key">ATK</div></div>
+          <div class="hstat"><div class="hstat-val">6</div><div class="hstat-key">DEF</div></div>
+          <div class="hstat"><div class="hstat-val">25</div><div class="hstat-key">PV</div></div>
+        </div>
+        <p class="hero-power">Precognición — ve el dado enemigo antes de tirarse. Nivel 5: Devastación Psíquica en área de 2 casillas.</p>
+        <div class="hero-levels">
+          <div class="lvl-dot active"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div>
+        </div>
+      </div>
+      <div class="hero-card" style="--hcolor:var(--drath)">
+        <div class="hero-kingdom">Drath'Orn · Reina</div>
+        <div class="hero-name">Sorra Ign</div>
+        <div class="hero-stats-row">
+          <div class="hstat"><div class="hstat-val">9</div><div class="hstat-key">ATK</div></div>
+          <div class="hstat"><div class="hstat-val">10</div><div class="hstat-key">DEF</div></div>
+          <div class="hstat"><div class="hstat-val">30</div><div class="hstat-key">PV</div></div>
+        </div>
+        <p class="hero-power">Blindaje Activo — reduce daño en 2. Nivel 5: Modo Fortaleza, DEF 20 por 3 turnos.</p>
+        <div class="hero-levels">
+          <div class="lvl-dot active"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div>
+        </div>
+      </div>
+      <div class="hero-card" style="--hcolor:var(--eth)">
+        <div class="hero-kingdom">Eth'Sylva · Rey</div>
+        <div class="hero-name">Aeon Mir</div>
+        <div class="hero-stats-row">
+          <div class="hstat"><div class="hstat-val">7</div><div class="hstat-key">ATK</div></div>
+          <div class="hstat"><div class="hstat-val">5</div><div class="hstat-key">DEF</div></div>
+          <div class="hstat"><div class="hstat-val">20×3</div><div class="hstat-key">PV</div></div>
+        </div>
+        <p class="hero-power">Tres Cuerpos — solo muere si los 3 son eliminados. Nivel 5: Resurrección una vez por partida.</p>
+        <div class="hero-levels">
+          <div class="lvl-dot active"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div>
+        </div>
+      </div>
+      <div class="hero-card" style="--hcolor:var(--ur)">
+        <div class="hero-kingdom">Ur'Kaath · Rey</div>
+        <div class="hero-name">Krul Vex</div>
+        <div class="hero-stats-row">
+          <div class="hstat"><div class="hstat-val">5+</div><div class="hstat-key">ATK</div></div>
+          <div class="hstat"><div class="hstat-val">5+</div><div class="hstat-key">DEF</div></div>
+          <div class="hstat"><div class="hstat-val">20+</div><div class="hstat-key">PV</div></div>
+        </div>
+        <p class="hero-power">Absorción — gana +2 ATK y DEF al matar héroes. Nivel 5: Forma Devora-Todo, stats ×2.</p>
+        <div class="hero-levels">
+          <div class="lvl-dot active"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div><div class="lvl-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CARTAS -->
+<section id="cartas">
+  <div class="container">
+    <h2 class="section-title">Sistema de Cartas</h2>
+    <p class="section-sub">6 mazos · 221 cartas · 1 sellada</p>
+    <div class="cards-showcase">
+      <div class="game-card" style="--ccolor:var(--eth)">
+        <div class="card-type">Mineral</div>
+        <div class="card-name">Cristal de Veta Profunda</div>
+        <span class="card-icon">💎</span>
+        <div class="card-effect">Genera 15 recursos al ser descartada. Solo se obtiene con recolector activo.</div>
+        <div class="card-cost">Valor: 3</div>
+      </div>
+      <div class="game-card" style="--ccolor:var(--vael)">
+        <div class="card-type">Equipo</div>
+        <div class="card-name">Capa de Sombra</div>
+        <span class="card-icon">🧥</span>
+        <div class="card-effect">DEF +2 permanente. Solo héroes. Se coloca como pieza física en la figura.</div>
+        <div class="card-cost">Costo: 8 minerales</div>
+      </div>
+      <div class="game-card" style="--ccolor:var(--drath)">
+        <div class="card-type">Evento · Exterior</div>
+        <div class="card-name">Emboscada</div>
+        <span class="card-icon">⚔️</span>
+        <div class="card-effect">Aparece una bestia menor. Combate inmediato al pisar esta casilla.</div>
+        <div class="card-cost">Zona: exterior</div>
+      </div>
+      <div class="game-card" style="--ccolor:var(--ur)">
+        <div class="card-type">Equipo</div>
+        <div class="card-name">Casco de Acero Cósmico</div>
+        <span class="card-icon">⛑️</span>
+        <div class="card-effect">DEF +3. Reduce daño de área a la mitad. Pieza física intercambiable.</div>
+        <div class="card-cost">Costo: 12 minerales</div>
+      </div>
+      <div class="game-card" style="--ccolor:#E24B4A">
+        <div class="card-type">Evento · Núcleo</div>
+        <div class="card-name">Portal del Vacío</div>
+        <span class="card-icon">🌀</span>
+        <div class="card-effect">Teletransporta tu unidad a cualquier portal activo del tablero.</div>
+        <div class="card-cost">Zona: núcleo</div>
+      </div>
+      <div class="game-card" style="--ccolor:var(--gold)">
+        <div class="card-type">Grial · SELLADA</div>
+        <div class="card-name">???</div>
+        <span class="card-icon">🔒</span>
+        <div class="card-effect">Nadie la lee hasta que el Grial es alcanzado. El destino final aguarda.</div>
+        <div class="card-cost">1 carta única</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BESTIARIO -->
+<section id="bestiario">
+  <div class="container">
+    <h2 class="section-title">Bestiario</h2>
+    <p class="section-sub">La dificultad crece al acercarte al núcleo</p>
+    <div class="bestiary-zones">
+      <div>
+        <div class="zone-header"><span class="zone-badge zone-ext">Zona Exterior — Bestias Menores</span></div>
+        <div class="beasts-grid">
+          <div class="beast-card">
+            <span class="beast-icon">🦁</span>
+            <div class="beast-name">León de Dos Cabezas</div>
+            <div class="beast-stats">PV <span>12</span> · ATK <span>5</span> · DEF <span>3</span></div>
+            <div class="beast-ability">Ataca 2 veces por turno. Recompensa: 12 recursos.</div>
+          </div>
+          <div class="beast-card">
+            <span class="beast-icon">🦂</span>
+            <div class="beast-name">Enjambre Cósmico</div>
+            <div class="beast-stats">PV <span>10</span> · ATK <span>4</span> · DEF <span>2</span></div>
+            <div class="beast-ability">Envenena: -1 PV/turno por 3 turnos. Recompensa: 8 recursos.</div>
+          </div>
+          <div class="beast-card">
+            <span class="beast-icon">🕷️</span>
+            <div class="beast-name">Araña de Cristal</div>
+            <div class="beast-stats">PV <span>14</span> · ATK <span>3</span> · DEF <span>6</span></div>
+            <div class="beast-ability">Inmoviliza 1 turno si bloquea. Recompensa: 15 recursos.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="zone-header"><span class="zone-badge zone-med">Zona Media — Guardianes</span></div>
+        <div class="beasts-grid">
+          <div class="beast-card">
+            <span class="beast-icon">🐉</span>
+            <div class="beast-name">Leviatán de Cristal</div>
+            <div class="beast-stats">PV <span>35</span> · ATK <span>8</span> · DEF <span>7</span></div>
+            <div class="beast-ability">Regenera 3 PV/turno. Recompensa: 30 + carta equipo.</div>
+          </div>
+          <div class="beast-card">
+            <span class="beast-icon">🗿</span>
+            <div class="beast-name">Gólem Estelar</div>
+            <div class="beast-stats">PV <span>40</span> · ATK <span>10</span> · DEF <span>12</span></div>
+            <div class="beast-ability">Inmune a CAT1. Solo dañable por héroes o CAT2. Recompensa: 35.</div>
+          </div>
+          <div class="beast-card">
+            <span class="beast-icon">🐍</span>
+            <div class="beast-name">Hidra Dimensional</div>
+            <div class="beast-stats">PV <span>30</span> · ATK <span>9</span> · DEF <span>5</span></div>
+            <div class="beast-ability">3 cabezas de 10 PV c/u. Destruir las 3. Recompensa: 28 + runa.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="zone-header"><span class="zone-badge zone-core">Núcleo — Los 4 Jefes</span></div>
+        <div class="beasts-grid">
+          <div class="beast-card" style="border-color:rgba(232,76,74,0.3)">
+            <span class="beast-icon">👹</span>
+            <div class="beast-name">Malachar el Devorador</div>
+            <div class="beast-stats">PV <span>100</span> · ATK <span>15→20</span> · DEF <span>10→6</span></div>
+            <div class="beast-ability">Destruye 1 pieza de equipo al inicio del combate. 2 fases.</div>
+          </div>
+          <div class="beast-card" style="border-color:rgba(232,76,74,0.3)">
+            <span class="beast-icon">👁️</span>
+            <div class="beast-name">Veyss la Sin-Sombra</div>
+            <div class="beast-stats">PV <span>90</span> · ATK <span>18</span> · DEF <span>7</span></div>
+            <div class="beast-ability">Lluvia oscura: daña a TODAS tus unidades cada 2 turnos.</div>
+          </div>
+          <div class="beast-card" style="border-color:rgba(232,76,74,0.3)">
+            <span class="beast-icon">♾️</span>
+            <div class="beast-name">Keth el Eterno</div>
+            <div class="beast-stats">PV <span>110</span> · ATK <span>13</span> · DEF <span>13</span></div>
+            <div class="beast-ability">Resucita con 55 PV si no es derrotado en 3 turnos. 1 vez.</div>
+          </div>
+          <div class="beast-card" style="border-color:rgba(201,168,76,0.5)">
+            <span class="beast-icon">🌌</span>
+            <div class="beast-name">Zor-Null el Origen</div>
+            <div class="beast-stats">PV <span>120</span> · ATK <span>20→25</span> · DEF <span>15</span></div>
+            <div class="beast-ability">Invierte tus dados. Grieta Cósmica elimina unidades sin tirada.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DADOS -->
+<section id="dados">
+  <div class="container">
+    <h2 class="section-title">Sistema de Dados</h2>
+    <p class="section-sub">Haz clic para lanzar</p>
+    <div class="dice-area">
+      <div>
+        <div class="die" id="d6" onclick="rollDie('d6',6)">6</div>
+        <div class="dice-label">D6 · Movimiento</div>
+      </div>
+      <div>
+        <div class="die" id="d8" onclick="rollDie('d8',8)">8</div>
+        <div class="dice-label">D8 · Combate</div>
+      </div>
+      <div>
+        <div class="die" id="d12" onclick="rollDie('d12',12)">12</div>
+        <div class="dice-label">D12 · Evento</div>
+      </div>
+    </div>
+    <div class="dice-result" id="diceResult">Haz clic en un dado para lanzarlo</div>
+  </div>
+</section>
+
+<!-- FASES -->
+<section id="fases">
+  <div class="container">
+    <h2 class="section-title">Fases del Juego</h2>
+    <div class="divider"></div>
+    <div class="phases-timeline">
+      <div class="phase-block">
+        <div class="phase-num">I</div>
+        <div class="phase-title">La Gran Guerra</div>
+        <p class="phase-desc">Los 4 reinos se enfrentan. Capturar castillos enemigos absorbe sus recursos. Los reinos destruidos salen del tablero. La guerra termina cuando queda el más fuerte.</p>
+      </div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-block">
+        <div class="phase-num">II</div>
+        <div class="phase-title">La Búsqueda del Grial</div>
+        <p class="phase-desc">El reino superviviente marcha al núcleo. Debe derrotar los 4 jefes y recolectar los Fragmentos del Grial. Solo entonces podrá revelar la carta sellada final.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GRIAL -->
+<section id="grial">
+  <div class="container">
+    <div class="grial-symbol">✦</div>
+    <h2 class="grial-title">El Grial Eterno</h2>
+    <p class="grial-text">Con los 4 Fragmentos obtenidos, el portador activa el núcleo. La carta sellada se revela. Puede ser victoria, trampa, traición, o algo que nadie imagina. El creador del juego decide antes de empezar. Nadie lo sabe hasta ese momento.</p>
+    <div class="sealed">⚔ Carta Sellada · No Revelar ⚔</div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">✦ VALDRIS ✦</div>
+  <div class="footer-links">
+    <a href="#lore">Lore</a>
+    <a href="#reinos">Reinos</a>
+    <a href="#heroes">Héroes</a>
+    <a href="#cartas">Cartas</a>
+    <a href="#bestiario">Bestiario</a>
+    <a href="game.html">Jugar</a>
+  </div>
+  <p class="footer-copy">Diseño original personal · Desarrollado con Claude / Anthropic</p>
+</footer>
+
+<script>
+// PARTICLES
+const container = document.getElementById('particles');
+for(let i=0;i<80;i++){
+  const s = document.createElement('div');
+  s.className='star';
+  const size = Math.random()*2+0.5;
+  s.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
+  container.appendChild(s);
+}
+
+// DICE
+function rollDie(id, faces){
+  const el = document.getElementById(id);
+  el.classList.remove('rolling');
+  void el.offsetWidth;
+  el.classList.add('rolling');
+  const names = {d6:'Movimiento',d8:'Combate',d12:'Evento'};
+  let result;
+  const rolls = [];
+  const interval = setInterval(()=>{
+    result = Math.floor(Math.random()*faces)+1;
+    el.textContent = result;
+  },60);
+  setTimeout(()=>{
+    clearInterval(interval);
+    result = Math.floor(Math.random()*faces)+1;
+    el.textContent = result;
+    document.getElementById('diceResult').innerHTML = `${names[id]}: <span>${result}</span> en ${id.toUpperCase()}`;
+    el.classList.remove('rolling');
+  },500);
+}
+</script>
+</body>
+</html>
