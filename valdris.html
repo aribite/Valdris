@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALDRIS — El Juego</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --vael: #7F77DD;
+  --vael-dark: #3C3489;
+  --drath: #D85A30;
+  --drath-dark: #712B13;
+  --eth: #1D9E75;
+  --eth-dark: #085041;
+  --ur: #BA7517;
+  --ur-dark: #633806;
+  --bg: #05060d;
+  --bg2: #0b0d18;
+  --bg3: #141726;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --text: #e8e4d9;
+  --text-muted: #7d7566;
+  --border: rgba(201,168,76,0.2);
+  --danger: #e24b4a;
+  --success: #2eb873;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:radial-gradient(ellipse at top, #1a1830 0%, var(--bg) 60%);
+  color:var(--text);
+  font-family:'Crimson Pro',Georgia,serif;
+  user-select:none;
+}
+button{font-family:inherit;cursor:pointer;}
+
+/* ===== SCREEN SYSTEM ===== */
+.screen{
+  position:fixed;inset:0;display:none;
+  opacity:0;transition:opacity 0.5s;
+}
+.screen.active{display:flex;opacity:1;}
+.screen.fading-in{opacity:0;animation:fadeIn 0.5s forwards;}
+@keyframes fadeIn{to{opacity:1;}}
+
+/* ===== PARTICLES ===== */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) infinite alternate;}
+@keyframes twinkle{0%{opacity:0.1;}100%{opacity:0.8;}}
+
+/* ===== MAIN MENU ===== */
+#menu{flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:10;}
+.menu-logo{font-size:5rem;margin-bottom:1rem;filter:drop-shadow(0 0 20px rgba(201,168,76,0.5));animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.menu-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(3rem,10vw,7rem);
+  font-weight:900;letter-spacing:0.15em;
+  background:linear-gradient(135deg,var(--gold-light),var(--gold),#8B6914);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  line-height:1;
+}
+.menu-sub{
+  font-family:'Cinzel',serif;
+  font-size:clamp(0.8rem,1.8vw,1.1rem);
+  letter-spacing:0.5em;color:var(--text-muted);
+  margin-top:1rem;text-transform:uppercase;
+}
+.menu-tagline{font-size:1.1rem;color:rgba(232,228,217,0.5);margin-top:1rem;font-style:italic;}
+.menu-buttons{display:flex;flex-direction:column;gap:0.8rem;margin-top:3rem;min-width:320px;}
+.menu-btn{
+  font-family:'Cinzel',serif;font-size:0.9rem;letter-spacing:0.2em;
+  padding:1rem 2rem;
+  border:1px solid var(--gold);background:rgba(201,168,76,0.05);
+  color:var(--gold);text-transform:uppercase;
+  transition:all 0.3s;
+}
+.menu-btn:hover{background:var(--gold);color:var(--bg);transform:translateY(-2px);letter-spacing:0.25em;}
+.menu-btn.primary{background:rgba(201,168,76,0.2);}
+.menu-footer{position:absolute;bottom:1.5rem;font-size:0.75rem;color:rgba(138,128,112,0.5);letter-spacing:0.2em;}
+
+/* ===== SETUP SCREEN ===== */
+#setup{flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:10;}
+.setup-panel{
+  max-width:900px;width:100%;
+  background:rgba(11,13,24,0.85);backdrop-filter:blur(10px);
+  border:1px solid var(--border);
+  padding:2.5rem;
+}
+.setup-title{
+  font-family:'Cinzel Decorative',serif;font-size:2rem;
+  color:var(--gold);text-align:center;margin-bottom:0.5rem;
+}
+.setup-sub{text-align:center;color:var(--text-muted);letter-spacing:0.3em;font-size:0.75rem;margin-bottom:2rem;text-transform:uppercase;font-family:'Cinzel',serif;}
+.player-count{display:flex;gap:0.5rem;justify-content:center;margin-bottom:2rem;}
+.count-btn{
+  padding:0.6rem 1.5rem;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);
+  font-family:'Cinzel',serif;font-size:0.85rem;letter-spacing:0.15em;
+  transition:all 0.3s;
+}
+.count-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1);}
+.kingdom-choose{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem;}
+.k-slot{
+  border:1px solid var(--border);padding:1.2rem;
+  display:flex;align-items:center;gap:1rem;transition:all 0.3s;
+}
+.k-slot.active{border-color:var(--slot-color,var(--gold));background:rgba(255,255,255,0.03);}
+.k-slot-num{
+  font-family:'Cinzel Decorative',serif;font-size:1.5rem;color:var(--text-muted);
+  min-width:1.5rem;
+}
+.k-slot-info{flex:1;}
+.k-slot label{
+  display:block;font-size:0.7rem;letter-spacing:0.2em;color:var(--text-muted);
+  text-transform:uppercase;margin-bottom:0.3rem;font-family:'Cinzel',serif;
+}
+.k-slot input{
+  background:rgba(0,0,0,0.3);border:1px solid var(--border);
+  color:var(--text);padding:0.4rem 0.7rem;font-family:inherit;font-size:0.95rem;
+  width:100%;
+}
+.k-slot input:focus{outline:none;border-color:var(--gold);}
+.k-slot-kingdoms{display:flex;gap:0.3rem;margin-top:0.6rem;flex-wrap:wrap;}
+.k-pick{
+  width:34px;height:34px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;cursor:pointer;transition:all 0.2s;
+}
+.k-pick:hover{transform:scale(1.1);}
+.k-pick.active{border-color:currentColor;background:rgba(255,255,255,0.08);}
+.k-pick.disabled{opacity:0.25;cursor:not-allowed;}
+.k-pick-vael{color:var(--vael);}
+.k-pick-drath{color:var(--drath);}
+.k-pick-eth{color:var(--eth);}
+.k-pick-ur{color:var(--ur);}
+.k-slot-type{display:flex;gap:0.3rem;margin-top:0.4rem;}
+.type-btn{
+  font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;
+  padding:0.25rem 0.6rem;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);text-transform:uppercase;
+}
+.type-btn.active{border-color:var(--gold);color:var(--gold);}
+.setup-actions{display:flex;gap:1rem;justify-content:center;margin-top:1rem;}
+
+/* ===== GAME BOARD ===== */
+#game{z-index:5;}
+.game-layout{
+  display:grid;grid-template-columns:260px 1fr 300px;
+  width:100%;height:100%;gap:0;
+}
+.left-panel,.right-panel{
+  background:rgba(11,13,24,0.9);backdrop-filter:blur(10px);
+  border:0 solid var(--border);padding:1.2rem;
+  overflow-y:auto;
+}
+.left-panel{border-right-width:1px;}
+.right-panel{border-left-width:1px;}
+.board-area{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;padding:1rem;
+}
+
+/* ===== LEFT PANEL (Players) ===== */
+.panel-title{
+  font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;
+  color:var(--text-muted);text-transform:uppercase;
+  margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);
+}
+.player-row{
+  padding:0.8rem;border:1px solid var(--border);margin-bottom:0.7rem;
+  transition:all 0.3s;position:relative;
+}
+.player-row.current{border-color:var(--pcolor);box-shadow:0 0 20px rgba(201,168,76,0.1);}
+.player-row.eliminated{opacity:0.3;}
+.player-row.eliminated::after{content:'ELIMINADO';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-8deg);color:var(--danger);font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.3em;}
+.p-header{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;}
+.p-symbol{font-size:1.4rem;}
+.p-name{font-family:'Cinzel',serif;color:var(--pcolor);font-size:0.9rem;flex:1;}
+.p-type{font-size:0.6rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;}
+.p-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;font-size:0.7rem;}
+.p-stat{text-align:center;padding:0.3rem;background:rgba(255,255,255,0.02);}
+.p-stat-val{color:var(--pcolor);font-family:'Cinzel Decorative',serif;font-size:1rem;display:block;}
+.p-stat-key{color:var(--text-muted);font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;}
+
+/* ===== RIGHT PANEL (Turn info) ===== */
+.turn-indicator{
+  text-align:center;padding:1rem;border:1px solid var(--gold);
+  background:rgba(201,168,76,0.05);margin-bottom:1.2rem;
+}
+.turn-num{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:var(--text-muted);text-transform:uppercase;}
+.turn-player{font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--current-color,var(--gold));margin-top:0.3rem;}
+.phase-pill{
+  display:inline-block;font-size:0.65rem;letter-spacing:0.2em;
+  padding:0.3rem 0.8rem;border:1px solid currentColor;margin-top:0.6rem;
+  text-transform:uppercase;font-family:'Cinzel',serif;
+}
+.phase-info{
+  padding:1rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);
+  margin-bottom:1rem;font-size:0.85rem;line-height:1.6;
+}
+.phase-info strong{color:var(--gold-light);display:block;margin-bottom:0.4rem;font-family:'Cinzel',serif;letter-spacing:0.1em;font-size:0.75rem;text-transform:uppercase;}
+.action-buttons{display:flex;flex-direction:column;gap:0.5rem;}
+.action-btn{
+  padding:0.7rem 1rem;border:1px solid var(--border);background:rgba(255,255,255,0.02);
+  color:var(--text);font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.15em;
+  text-transform:uppercase;transition:all 0.2s;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.action-btn:hover:not(:disabled){border-color:var(--gold);background:rgba(201,168,76,0.1);color:var(--gold);}
+.action-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.action-btn .cost{font-size:0.7rem;color:var(--gold);}
+.action-btn.end-turn{border-color:var(--gold);background:rgba(201,168,76,0.1);color:var(--gold);margin-top:0.8rem;justify-content:center;}
+.action-btn.end-turn:hover:not(:disabled){background:var(--gold);color:var(--bg);}
+
+/* ===== BOARD ===== */
+#boardSvg{
+  max-width:100%;max-height:calc(100vh - 180px);
+  filter:drop-shadow(0 0 30px rgba(201,168,76,0.1));
+}
+.board-hex{
+  fill:rgba(255,255,255,0.02);stroke:rgba(201,168,76,0.15);
+  stroke-width:1;transition:all 0.2s;cursor:pointer;
+}
+.board-hex:hover{fill:rgba(201,168,76,0.08);stroke:var(--gold);}
+.board-hex.movable{fill:rgba(46,184,115,0.15);stroke:var(--success);stroke-width:2;animation:pulseHex 1.2s infinite;}
+.board-hex.attackable{fill:rgba(226,75,74,0.2);stroke:var(--danger);stroke-width:2;animation:pulseHex 1s infinite;}
+.board-hex.selected{fill:rgba(201,168,76,0.2);stroke:var(--gold);stroke-width:2.5;}
+@keyframes pulseHex{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.board-hex.mine{fill:rgba(29,158,117,0.15);stroke:var(--eth);}
+.board-hex.castle-vael{fill:rgba(127,119,221,0.25);stroke:var(--vael);stroke-width:2;}
+.board-hex.castle-drath{fill:rgba(216,90,48,0.25);stroke:var(--drath);stroke-width:2;}
+.board-hex.castle-eth{fill:rgba(29,158,117,0.25);stroke:var(--eth);stroke-width:2;}
+.board-hex.castle-ur{fill:rgba(186,117,23,0.25);stroke:var(--ur);stroke-width:2;}
+.board-hex.trap{fill:rgba(226,75,74,0.1);stroke:rgba(226,75,74,0.4);stroke-dasharray:3,2;}
+.hex-icon{font-size:14px;pointer-events:none;text-anchor:middle;dominant-baseline:central;}
+.unit-marker{pointer-events:none;transition:all 0.3s;}
+.unit-circle{filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
+.unit-label{
+  font-family:'Cinzel',serif;font-size:10px;font-weight:600;
+  fill:#fff;text-anchor:middle;dominant-baseline:central;
+  text-shadow:0 0 3px #000;
+}
+.unit-hp-bg{fill:rgba(0,0,0,0.6);}
+.unit-hp-fill{transition:all 0.3s;}
+
+/* ===== MESSAGE OVERLAY ===== */
+#messageOverlay{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(11,13,24,0.95);border:1px solid var(--gold);
+  padding:1rem 2rem;z-index:50;display:none;
+  font-family:'Cinzel',serif;color:var(--gold-light);
+  letter-spacing:0.1em;max-width:400px;text-align:center;
+  animation:msgPop 0.3s ease-out;
+}
+@keyframes msgPop{from{transform:translate(-50%,-50%) scale(0.8);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+
+/* ===== DICE OVERLAY ===== */
+#diceOverlay{
+  position:fixed;inset:0;background:rgba(5,6,13,0.92);backdrop-filter:blur(8px);
+  z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;
+}
+#diceOverlay.show{display:flex;}
+.dice-big{
+  width:160px;height:160px;border:3px solid var(--gold);
+  background:linear-gradient(135deg,var(--bg3),var(--bg2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel Decorative',serif;font-size:5rem;color:var(--gold-light);
+  box-shadow:0 0 40px rgba(201,168,76,0.3);
+}
+.dice-big.rolling{animation:rollDie 0.12s linear infinite;}
+@keyframes rollDie{0%{transform:rotate(0) scale(1);}100%{transform:rotate(360deg) scale(1.05);}}
+.dice-label-big{font-family:'Cinzel',serif;letter-spacing:0.3em;color:var(--text-muted);margin-top:1.5rem;font-size:0.85rem;text-transform:uppercase;}
+
+/* ===== COMBAT SCREEN ===== */
+#combat{z-index:20;flex-direction:column;background:linear-gradient(180deg,#1a0a15 0%,#0a0a18 100%);}
+#combat.bg-vael{background:radial-gradient(ellipse at center,#2a2560 0%,#0a0a18 70%);}
+#combat.bg-drath{background:radial-gradient(ellipse at center,#5c1f0e 0%,#0a0a18 70%);}
+#combat.bg-eth{background:radial-gradient(ellipse at center,#0e3d2e 0%,#0a0a18 70%);}
+#combat.bg-ur{background:radial-gradient(ellipse at center,#4d2906 0%,#0a0a18 70%);}
+.combat-scene{
+  flex:1;display:flex;flex-direction:column;justify-content:space-between;
+  padding:2rem;position:relative;max-width:1200px;margin:0 auto;width:100%;
+}
+.combatant{
+  display:flex;align-items:center;gap:2rem;
+}
+.combatant.enemy{align-self:flex-end;flex-direction:row-reverse;}
+.combat-sprite{
+  width:180px;height:180px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.combatant.player .combat-sprite{animation:slideInLeft 0.6s ease-out;}
+.combatant.enemy .combat-sprite{animation:slideInRight 0.6s ease-out;}
+@keyframes slideInLeft{from{transform:translateX(-200px) scale(0.8);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
+@keyframes slideInRight{from{transform:translateX(200px) scale(0.8);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
+.combat-sprite.shake{animation:shakeFX 0.4s;}
+.combat-sprite.attack-lunge{animation:lunge 0.4s;}
+@keyframes shakeFX{0%,100%{transform:translate(0);}10%,30%,50%,70%,90%{transform:translate(-8px,2px);}20%,40%,60%,80%{transform:translate(8px,-2px);}}
+@keyframes lunge{0%,100%{transform:translate(0);}50%{transform:translate(var(--lunge,30px),0) scale(1.1);}}
+.combat-sprite.enemy-lunge{--lunge:-30px;}
+.combat-sprite.defeated{animation:defeatFX 1s forwards;}
+@keyframes defeatFX{to{transform:rotate(90deg) translateY(50px);opacity:0.3;filter:grayscale(1);}}
+.damage-number{
+  position:absolute;font-family:'Cinzel Decorative',serif;font-size:3rem;
+  color:#ffdb4a;text-shadow:0 0 12px #ff5500,2px 2px 0 #000;
+  pointer-events:none;animation:dmgFloat 1s forwards;
+  font-weight:900;
+}
+@keyframes dmgFloat{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-80px);opacity:0;}}
+.combat-info{flex:1;max-width:400px;}
+.combat-name{font-family:'Cinzel Decorative',serif;font-size:1.6rem;color:var(--ncolor);margin-bottom:0.4rem;text-shadow:0 0 10px currentColor;}
+.combat-type{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1rem;}
+.hp-bar{
+  background:rgba(0,0,0,0.6);border:1px solid var(--ncolor);
+  height:22px;position:relative;overflow:hidden;
+}
+.hp-fill{
+  height:100%;background:linear-gradient(90deg,var(--ncolor),var(--ncolor-light,var(--ncolor)));
+  transition:width 0.5s;
+}
+.hp-text{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:0.8rem;color:#fff;text-shadow:1px 1px 0 #000;
+}
+.combat-stats{display:flex;gap:1rem;margin-top:0.8rem;font-size:0.8rem;}
+.combat-stat{color:var(--text-muted);}
+.combat-stat b{color:var(--ncolor);font-family:'Cinzel',serif;font-size:1rem;}
+
+/* Combat menu */
+.combat-menu{
+  border-top:2px solid var(--gold);
+  background:rgba(11,13,24,0.95);
+  padding:1.2rem 2rem;
+}
+.combat-log{
+  font-family:'Crimson Pro',serif;font-style:italic;
+  color:var(--gold-light);font-size:1rem;margin-bottom:1rem;
+  min-height:3rem;line-height:1.5;max-width:800px;margin-left:auto;margin-right:auto;text-align:center;
+}
+.combat-actions{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0.8rem;
+  max-width:800px;margin:0 auto;
+}
+.combat-action{
+  padding:1rem;border:1px solid var(--gold);background:rgba(201,168,76,0.05);
+  color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.15em;font-size:0.8rem;
+  text-transform:uppercase;transition:all 0.2s;text-align:center;
+}
+.combat-action:hover:not(:disabled){background:var(--gold);color:var(--bg);transform:translateY(-2px);}
+.combat-action:disabled{opacity:0.3;cursor:not-allowed;}
+.combat-action .sub{display:block;font-size:0.65rem;color:var(--text-muted);margin-top:0.3rem;letter-spacing:0.1em;}
+
+/* ===== COMBAT SPRITES (SVG art) ===== */
+.sprite-bg{
+  width:100%;height:100%;
+  background:radial-gradient(circle at center,var(--sp-color,#555) 0%,transparent 70%);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.sprite-emoji{font-size:6rem;filter:drop-shadow(0 0 15px var(--sp-color,#fff));}
+
+/* ===== TUTORIAL ===== */
+#tutorial{z-index:100;background:rgba(5,6,13,0.92);backdrop-filter:blur(12px);flex-direction:column;align-items:center;justify-content:center;padding:2rem;}
+.tut-box{
+  max-width:680px;width:100%;background:rgba(11,13,24,0.95);
+  border:1px solid var(--gold);padding:2.5rem;position:relative;
+}
+.tut-step{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.3em;color:var(--text-muted);margin-bottom:0.5rem;text-transform:uppercase;}
+.tut-title{font-family:'Cinzel Decorative',serif;font-size:1.8rem;color:var(--gold-light);margin-bottom:1.2rem;}
+.tut-content{font-size:1.05rem;line-height:1.8;color:rgba(232,228,217,0.9);}
+.tut-content strong{color:var(--gold-light);}
+.tut-content .highlight{background:rgba(201,168,76,0.15);padding:0.1rem 0.4rem;border-left:2px solid var(--gold);}
+.tut-illustration{text-align:center;margin:1.5rem 0;font-size:3rem;}
+.tut-nav{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;}
+.tut-progress{display:flex;gap:0.3rem;}
+.tut-dot{width:8px;height:8px;border-radius:50%;border:1px solid var(--gold);}
+.tut-dot.active{background:var(--gold);}
+.tut-btn{
+  padding:0.7rem 1.8rem;border:1px solid var(--gold);background:rgba(201,168,76,0.1);
+  color:var(--gold);font-family:'Cinzel',serif;letter-spacing:0.2em;font-size:0.75rem;
+  text-transform:uppercase;transition:all 0.2s;
+}
+.tut-btn:hover{background:var(--gold);color:var(--bg);}
+.tut-btn.skip{border-color:var(--border);background:transparent;color:var(--text-muted);}
+
+/* ===== WINNER SCREEN ===== */
+#winner{z-index:30;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;}
+.winner-glow{position:absolute;inset:0;background:radial-gradient(ellipse at center,var(--win-color,var(--gold)) 0%,transparent 60%);opacity:0.2;pointer-events:none;}
+.winner-symbol{font-size:8rem;animation:winnerPulse 2s ease-in-out infinite;filter:drop-shadow(0 0 40px var(--win-color));}
+@keyframes winnerPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.winner-title{font-family:'Cinzel Decorative',serif;font-size:clamp(2rem,6vw,4rem);color:var(--win-color,var(--gold));margin:1rem 0;text-shadow:0 0 30px currentColor;}
+.winner-name{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--text);letter-spacing:0.2em;margin-bottom:2rem;}
+.winner-text{max-width:600px;font-size:1.1rem;line-height:1.8;color:var(--text-muted);font-style:italic;margin-bottom:3rem;}
+
+/* ===== HELP BUTTON ===== */
+.help-btn{
+  position:fixed;top:1rem;right:1rem;z-index:15;
+  width:36px;height:36px;border:1px solid var(--border);background:rgba(11,13,24,0.8);
+  color:var(--gold);font-family:'Cinzel',serif;font-size:0.9rem;
+  border-radius:50%;display:none;
+}
+.help-btn:hover{border-color:var(--gold);}
+#game.active ~ .help-btn{display:block;}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border);}
+::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+@media(max-width:900px){
+  .game-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;}
+  .left-panel,.right-panel{max-height:25vh;}
+  .kingdom-choose{grid-template-columns:1fr;}
+  .combat-actions{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- ========== MENU PRINCIPAL ========== -->
+<div id="menu" class="screen active">
+  <div class="menu-logo">✦</div>
+  <h1 class="menu-title">VALDRIS</h1>
+  <p class="menu-sub">El juego de los cuatro reinos</p>
+  <p class="menu-tagline">Conquista. Devora. Asciende. Obtén el Grial.</p>
+  <div class="menu-buttons">
+    <button class="menu-btn primary" onclick="startTutorial()">▶ Aprender a jugar</button>
+    <button class="menu-btn" onclick="showSetup()">⚔ Nueva partida</button>
+    <button class="menu-btn" onclick="quickPlay()">⚡ Partida rápida (1 vs IA)</button>
+  </div>
+  <p class="menu-footer">VALDRIS · Prototipo v1.0</p>
+</div>
+
+<!-- ========== SETUP ========== -->
+<div id="setup" class="screen">
+  <div class="setup-panel">
+    <h2 class="setup-title">Preparar Partida</h2>
+    <p class="setup-sub">Elige jugadores y reinos</p>
+    
+    <div class="player-count">
+      <button class="count-btn" data-count="2">2 Jugadores</button>
+      <button class="count-btn active" data-count="3">3 Jugadores</button>
+      <button class="count-btn" data-count="4">4 Jugadores</button>
+    </div>
+    
+    <div id="playerSlots" class="kingdom-choose"></div>
+    
+    <div class="setup-actions">
+      <button class="menu-btn" onclick="showMenu()">← Volver</button>
+      <button class="menu-btn primary" onclick="startGame()">Comenzar ⚔</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== GAME ========== -->
+<div id="game" class="screen">
+  <div class="game-layout">
+    
+    <!-- LEFT: Players -->
+    <aside class="left-panel">
+      <div class="panel-title">Los Reinos</div>
+      <div id="playersList"></div>
+      
+      <div class="panel-title" style="margin-top:1.5rem">Unidad seleccionada</div>
+      <div id="selectedUnit" style="font-size:0.85rem;color:var(--text-muted);padding:0.8rem;border:1px solid var(--border);min-height:80px;">
+        Ninguna unidad seleccionada
+      </div>
+    </aside>
+    
+    <!-- CENTER: Board -->
+    <div class="board-area">
+      <svg id="boardSvg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <radialGradient id="grialGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#e8c97a" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#c9a84c" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <g id="boardGrid"></g>
+        <g id="boardUnits"></g>
+      </svg>
+    </div>
+    
+    <!-- RIGHT: Turn info -->
+    <aside class="right-panel">
+      <div class="turn-indicator">
+        <div class="turn-num">Turno <span id="turnNumber">1</span></div>
+        <div class="turn-player" id="turnPlayer">—</div>
+        <div class="phase-pill" id="phasePill">Fase</div>
+      </div>
+      
+      <div class="phase-info" id="phaseInfo">
+        <strong>Información de fase</strong>
+        Descripción de lo que puedes hacer ahora.
+      </div>
+      
+      <div class="action-buttons" id="actionButtons"></div>
+    </aside>
+    
+  </div>
+</div>
+
+<button class="help-btn" onclick="startTutorial()" title="Ayuda">?</button>
+
+<!-- ========== MESSAGE OVERLAY ========== -->
+<div id="messageOverlay"></div>
+
+<!-- ========== DICE OVERLAY ========== -->
+<div id="diceOverlay">
+  <div class="dice-big" id="diceBig">?</div>
+  <div class="dice-label-big" id="diceLabel">Lanzando dado...</div>
+</div>
+
+<!-- ========== COMBAT ========== -->
+<div id="combat" class="screen">
+  <div class="combat-scene">
+    <div class="combatant enemy" id="combatEnemy">
+      <div class="combat-info" style="text-align:right">
+        <div class="combat-name" id="enemyName">—</div>
+        <div class="combat-type" id="enemyType">—</div>
+        <div class="hp-bar"><div class="hp-fill" id="enemyHpFill"></div><div class="hp-text" id="enemyHpText">—</div></div>
+        <div class="combat-stats">
+          <div class="combat-stat">ATK <b id="enemyAtk">—</b></div>
+          <div class="combat-stat">DEF <b id="enemyDef">—</b></div>
+        </div>
+      </div>
+      <div class="combat-sprite" id="enemySprite"></div>
+    </div>
+    
+    <div class="combatant player" id="combatPlayer">
+      <div class="combat-sprite" id="playerSprite"></div>
+      <div class="combat-info">
+        <div class="combat-name" id="playerName">—</div>
+        <div class="combat-type" id="playerType">—</div>
+        <div class="hp-bar"><div class="hp-fill" id="playerHpFill"></div><div class="hp-text" id="playerHpText">—</div></div>
+        <div class="combat-stats">
+          <div class="combat-stat">ATK <b id="playerAtk">—</b></div>
+          <div class="combat-stat">DEF <b id="playerDef">—</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="combat-menu">
+    <div class="combat-log" id="combatLog">El combate comienza...</div>
+    <div class="combat-actions" id="combatActions"></div>
+  </div>
+</div>
+
+<!-- ========== TUTORIAL ========== -->
+<div id="tutorial" class="screen">
+  <div class="tut-box">
+    <div class="tut-step">Paso <span id="tutStepNum">1</span> de <span id="tutStepTotal">9</span></div>
+    <h2 class="tut-title" id="tutTitle">Bienvenido a Valdris</h2>
+    <div class="tut-illustration" id="tutIllustration">✦</div>
+    <div class="tut-content" id="tutContent">Contenido</div>
+    <div class="tut-nav">
+      <button class="tut-btn skip" onclick="skipTutorial()">Saltar tutorial</button>
+      <div class="tut-progress" id="tutDots"></div>
+      <button class="tut-btn" onclick="tutorialNext()" id="tutNext">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== WINNER ========== -->
+<div id="winner" class="screen">
+  <div class="winner-glow"></div>
+  <div class="winner-symbol" id="winnerSymbol">✦</div>
+  <h1 class="winner-title" id="winnerTitle">¡Victoria!</h1>
+  <div class="winner-name" id="winnerName">—</div>
+  <p class="winner-text" id="winnerText">—</p>
+  <div style="display:flex;gap:1rem;">
+    <button class="menu-btn" onclick="showMenu()">← Menú principal</button>
+    <button class="menu-btn primary" onclick="showSetup()">Nueva partida</button>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// ============ VALDRIS GAME ENGINE ====================
+// =====================================================
+
+// ----- KINGDOM DATA -----
+const KINGDOMS = {
+  vael: {
+    id:'vael', name:"Vael'Khor", epithet:"Tejedores de Sombra",
+    color:'#7F77DD', symbol:'🔮',
+    hero:{ name:'Zhar Vel', emoji:'🧙', atk:8, def:6, hp:25, maxHp:25,
+           power:'Precognición', powerDesc:'Ataque psíquico certero (+2 ATK este golpe)', powerCost:2 }
+  },
+  drath: {
+    id:'drath', name:"Drath'Orn", epithet:"Forjados en Llama",
+    color:'#D85A30', symbol:'⚙️',
+    hero:{ name:'Sorra Ign', emoji:'🛡️', atk:9, def:10, hp:30, maxHp:30,
+           power:'Blindaje Activo', powerDesc:'Reduce próximo daño recibido en 6', powerCost:2 }
+  },
+  eth: {
+    id:'eth', name:"Eth'Sylva", epithet:"Los Sin Forma",
+    color:'#1D9E75', symbol:'🌫️',
+    hero:{ name:'Aeon Mir', emoji:'👻', atk:7, def:5, hp:28, maxHp:28,
+           power:'Niebla Vital', powerDesc:'Recupera 8 PV', powerCost:2 }
+  },
+  ur: {
+    id:'ur', name:"Ur'Kaath", epithet:"Devoradores",
+    color:'#BA7517', symbol:'💀',
+    hero:{ name:'Krul Vex', emoji:'👹', atk:7, def:7, hp:26, maxHp:26,
+           power:'Absorber', powerDesc:'Daña 4 y roba 4 PV', powerCost:2 }
+  }
+};
+
+// ----- UNIT DEFINITIONS -----
+const UNIT_TYPES = {
+  soldier: { name:'Soldado', emoji:'⚔️', atk:4, def:2, hp:8, maxHp:8, cost:10, move:1 },
+  mech:    { name:'Mecánica', emoji:'🤖', atk:6, def:4, hp:15, maxHp:15, cost:30, move:1 },
+  miner:   { name:'Recolector', emoji:'⛏️', atk:1, def:1, hp:5, maxHp:5, cost:15, move:1 }
+};
+
+// ----- BOARD -----
+// 7x7 diamond grid. Castles at 4 corners of the diamond.
+const BOARD_SIZE = 7;
+const CENTER = 3; // index 3,3 is grial
+const CELL_SIZE = 90;
+const CELL_GAP = 2;
+
+// ----- GAME STATE -----
+let game = null;
+
+function createGameState(playerConfigs){
+  const state = {
+    turn: 1,
+    currentPlayer: 0,
+    phase: 'resources', // resources, recruit, move, end
+    phaseIndex: 0,
+    players: [],
+    board: [],
+    selectedCell: null,
+    movableCells: [],
+    attackableCells: [],
+    moveDiceRemaining: 0,
+    gameOver: false,
+    grialTaken: false,
+    combat: null,
+  };
+  
+  // Init board cells
+  for(let r=0; r<BOARD_SIZE; r++){
+    for(let c=0; c<BOARD_SIZE; c++){
+      // Diamond mask: only keep cells where manhattan distance from center <= 3
+      const dist = Math.abs(r-CENTER) + Math.abs(c-CENTER);
+      if(dist > 3) continue;
+      const cell = {
+        r, c, type:'normal', unit:null,
+      };
+      // Center = grial
+      if(r===CENTER && c===CENTER) cell.type = 'grial';
+      // Mines placed in symmetric positions
+      if((r===1&&c===3)||(r===3&&c===1)||(r===3&&c===5)||(r===5&&c===3)) cell.type='mine';
+      // Traps - random positions
+      state.board.push(cell);
+    }
+  }
+  
+  // Players setup
+  const castlePositions = [
+    {r:0, c:3}, // Top - Vael
+    {r:3, c:6}, // Right - Drath
+    {r:6, c:3}, // Bottom - Eth
+    {r:3, c:0}, // Left - Ur
+  ];
+  
+  playerConfigs.forEach((cfg, idx)=>{
+    const castlePos = castlePositions[idx];
+    const kingdomData = KINGDOMS[cfg.kingdom];
+    const player = {
+      idx,
+      name: cfg.name,
+      type: cfg.type, // 'human' or 'ai'
+      kingdom: cfg.kingdom,
+      kingdomData,
+      resources: 50,
+      castle: { r: castlePos.r, c: castlePos.c, hp: 40, maxHp: 40 },
+      units: [],
+      heroSummoned: false,
+      eliminated: false,
+    };
+    
+    // Mark castle on board
+    const castleCell = state.board.find(b=>b.r===castlePos.r && b.c===castlePos.c);
+    if(castleCell){
+      castleCell.type = 'castle';
+      castleCell.castleOwner = idx;
+    }
+    
+    // Starting units: 2 soldiers next to castle
+    const startSoldiers = getAdjacent(castlePos.r, castlePos.c, state).slice(0,2);
+    startSoldiers.forEach(adjCell=>{
+      const unit = createUnit('soldier', idx);
+      unit.r = adjCell.r; unit.c = adjCell.c;
+      player.units.push(unit);
+      adjCell.unit = unit;
+    });
+    
+    state.players.push(player);
+  });
+  
+  return state;
+}
+
+let unitIdCounter = 0;
+function createUnit(type, ownerIdx){
+  const proto = UNIT_TYPES[type];
+  return {
+    id: 'u'+(++unitIdCounter),
+    type, owner: ownerIdx,
+    name: proto.name, emoji: proto.emoji,
+    atk: proto.atk, def: proto.def,
+    hp: proto.maxHp, maxHp: proto.maxHp,
+    moved: false, level:1,
+    r:-1, c:-1,
+  };
+}
+
+function createHero(ownerIdx){
+  const player = game.players[ownerIdx];
+  const hero = player.kingdomData.hero;
+  return {
+    id: 'u'+(++unitIdCounter),
+    type:'hero', owner: ownerIdx,
+    name: hero.name, emoji: hero.emoji,
+    atk: hero.atk, def: hero.def,
+    hp: hero.maxHp, maxHp: hero.maxHp,
+    power: hero.power, powerDesc: hero.powerDesc, powerCost: hero.powerCost,
+    energy: 3, maxEnergy: 5,
+    isHero:true, moved:false, level:1,
+    r:-1, c:-1,
+  };
+}
+
+// ----- BOARD HELPERS -----
+function getCell(r, c, state=game){
+  return state.board.find(b=>b.r===r && b.c===c);
+}
+function getAdjacent(r, c, state=game){
+  const deltas = [[-1,0],[1,0],[0,-1],[0,1]];
+  return deltas.map(([dr,dc])=>getCell(r+dr, c+dc, state)).filter(x=>x);
+}
+function cellToPx(r, c){
+  // Convert to pixel position (for SVG, centered)
+  const boardPxSize = BOARD_SIZE * (CELL_SIZE + CELL_GAP);
+  const offsetX = (800 - boardPxSize) / 2;
+  const offsetY = (800 - boardPxSize) / 2;
+  return {
+    x: offsetX + c * (CELL_SIZE + CELL_GAP) + CELL_SIZE/2,
+    y: offsetY + r * (CELL_SIZE + CELL_GAP) + CELL_SIZE/2
+  };
+}
+
+// ----- RENDERING -----
+function renderBoard(){
+  const grid = document.getElementById('boardGrid');
+  const unitsG = document.getElementById('boardUnits');
+  grid.innerHTML = '';
+  unitsG.innerHTML = '';
+  
+  game.board.forEach(cell=>{
+    const {x, y} = cellToPx(cell.r, cell.c);
+    const size = CELL_SIZE;
+    
+    let cls = 'board-hex';
+    if(cell.type==='mine') cls += ' mine';
+    if(cell.type==='castle') {
+      const owner = game.players[cell.castleOwner];
+      cls += ' castle-'+owner.kingdom;
+    }
+    if(cell.type==='trap') cls += ' trap';
+    if(game.movableCells.some(m=>m.r===cell.r&&m.c===cell.c)) cls += ' movable';
+    if(game.attackableCells.some(m=>m.r===cell.r&&m.c===cell.c)) cls += ' attackable';
+    if(game.selectedCell && game.selectedCell.r===cell.r && game.selectedCell.c===cell.c) cls += ' selected';
+    
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x-size/2);
+    rect.setAttribute('y', y-size/2);
+    rect.setAttribute('width', size);
+    rect.setAttribute('height', size);
+    rect.setAttribute('rx', 6);
+    rect.setAttribute('class', cls);
+    rect.setAttribute('data-r', cell.r);
+    rect.setAttribute('data-c', cell.c);
+    rect.addEventListener('click', ()=>onCellClick(cell));
+    grid.appendChild(rect);
+    
+    // Icon for special cells
+    if(cell.type==='mine' || cell.type==='grial' || cell.type==='castle'){
+      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x', x);
+      txt.setAttribute('y', y);
+      txt.setAttribute('class','hex-icon');
+      if(cell.type==='mine') txt.textContent = '⛏';
+      else if(cell.type==='grial') txt.textContent = '✦';
+      else if(cell.type==='castle') {
+        const owner = game.players[cell.castleOwner];
+        txt.textContent = owner.kingdomData.symbol;
+      }
+      txt.setAttribute('font-size', cell.type==='grial' ? '28' : '18');
+      if(cell.type==='grial') txt.setAttribute('fill', '#c9a84c');
+      grid.appendChild(txt);
+    }
+    
+    // Coordinate label (small, corner)
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x', x - size/2 + 6);
+    lbl.setAttribute('y', y - size/2 + 12);
+    lbl.setAttribute('font-size','8');
+    lbl.setAttribute('fill','rgba(201,168,76,0.3)');
+    lbl.setAttribute('font-family','Cinzel,serif');
+    lbl.textContent = `${cell.r},${cell.c}`;
+    grid.appendChild(lbl);
+    
+    // Castle HP
+    if(cell.type==='castle'){
+      const owner = game.players[cell.castleOwner];
+      const hpPct = owner.castle.hp / owner.castle.maxHp;
+      const barW = size - 12;
+      const barBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      barBg.setAttribute('x', x - barW/2);
+      barBg.setAttribute('y', y + size/2 - 10);
+      barBg.setAttribute('width', barW);
+      barBg.setAttribute('height', 4);
+      barBg.setAttribute('fill','rgba(0,0,0,0.6)');
+      grid.appendChild(barBg);
+      const barFill = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      barFill.setAttribute('x', x - barW/2);
+      barFill.setAttribute('y', y + size/2 - 10);
+      barFill.setAttribute('width', barW * hpPct);
+      barFill.setAttribute('height', 4);
+      barFill.setAttribute('fill', owner.kingdomData.color);
+      grid.appendChild(barFill);
+    }
+    
+    // Unit
+    if(cell.unit){
+      renderUnit(cell.unit, x, y, unitsG);
+    }
+  });
+}
+
+function renderUnit(unit, x, y, parent){
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('class','unit-marker');
+  g.setAttribute('transform',`translate(${x},${y})`);
+  
+  const owner = game.players[unit.owner];
+  const color = owner.kingdomData.color;
+  
+  // Unit bg circle
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('r', unit.isHero ? 22 : 18);
+  circle.setAttribute('class','unit-circle');
+  circle.setAttribute('fill', color);
+  circle.setAttribute('fill-opacity','0.85');
+  circle.setAttribute('stroke', unit.isHero ? '#c9a84c' : '#fff');
+  circle.setAttribute('stroke-width', unit.isHero ? 3 : 1.5);
+  g.appendChild(circle);
+  
+  // Emoji
+  const emoji = document.createElementNS('http://www.w3.org/2000/svg','text');
+  emoji.setAttribute('text-anchor','middle');
+  emoji.setAttribute('dominant-baseline','central');
+  emoji.setAttribute('font-size', unit.isHero ? '20' : '16');
+  emoji.setAttribute('y', 1);
+  emoji.textContent = unit.emoji;
+  g.appendChild(emoji);
+  
+  // HP bar
+  const hpPct = unit.hp / unit.maxHp;
+  const barW = 30;
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bg.setAttribute('x', -barW/2);
+  bg.setAttribute('y', 22);
+  bg.setAttribute('width', barW);
+  bg.setAttribute('height', 3);
+  bg.setAttribute('class','unit-hp-bg');
+  g.appendChild(bg);
+  const fill = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  fill.setAttribute('x', -barW/2);
+  fill.setAttribute('y', 22);
+  fill.setAttribute('width', barW * hpPct);
+  fill.setAttribute('height', 3);
+  fill.setAttribute('class','unit-hp-fill');
+  fill.setAttribute('fill', hpPct > 0.5 ? '#2eb873' : hpPct > 0.25 ? '#ffb838' : '#e24b4a');
+  g.appendChild(fill);
+  
+  // Moved marker
+  if(unit.moved){
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx', 15);
+    dot.setAttribute('cy', -15);
+    dot.setAttribute('r', 4);
+    dot.setAttribute('fill','#888');
+    g.appendChild(dot);
+  }
+  
+  parent.appendChild(g);
+}
+
+function renderPlayers(){
+  const list = document.getElementById('playersList');
+  list.innerHTML = '';
+  game.players.forEach((p, idx)=>{
+    const row = document.createElement('div');
+    let cls = 'player-row';
+    if(idx === game.currentPlayer) cls += ' current';
+    if(p.eliminated) cls += ' eliminated';
+    row.className = cls;
+    row.style.setProperty('--pcolor', p.kingdomData.color);
+    row.innerHTML = `
+      <div class="p-header">
+        <span class="p-symbol">${p.kingdomData.symbol}</span>
+        <span class="p-name">${p.name}</span>
+        <span class="p-type">${p.type==='ai'?'IA':'Humano'}</span>
+      </div>
+      <div class="p-stats">
+        <div class="p-stat"><span class="p-stat-val">${p.resources}</span><span class="p-stat-key">Recursos</span></div>
+        <div class="p-stat"><span class="p-stat-val">${p.castle.hp}</span><span class="p-stat-key">Castillo</span></div>
+        <div class="p-stat"><span class="p-stat-val">${p.units.length}</span><span class="p-stat-key">Unidades</span></div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderTurnInfo(){
+  const p = game.players[game.currentPlayer];
+  document.getElementById('turnNumber').textContent = game.turn;
+  const tp = document.getElementById('turnPlayer');
+  tp.textContent = p.name + ' · ' + p.kingdomData.name;
+  tp.style.color = p.kingdomData.color;
+  document.documentElement.style.setProperty('--current-color', p.kingdomData.color);
+  
+  const phaseNames = {
+    resources: 'Fase de Recursos',
+    recruit: 'Fase de Reclutamiento',
+    move: 'Fase de Movimiento',
+    end: 'Fin del Turno'
+  };
+  const phasePill = document.getElementById('phasePill');
+  phasePill.textContent = phaseNames[game.phase];
+  phasePill.style.color = p.kingdomData.color;
+  
+  const phaseDesc = {
+    resources: 'Recibiste recursos de tus minas activas. Avanza cuando estés listo.',
+    recruit: 'Compra nuevas unidades desde tu castillo. Cada unidad aparece adyacente al castillo.',
+    move: `Te quedan <strong>${game.moveDiceRemaining}</strong> puntos de movimiento. Selecciona una unidad y muévela. Si hay enemigo al lado, puedes atacar.`,
+    end: 'El turno está terminando...'
+  };
+  document.getElementById('phaseInfo').innerHTML = `
+    <strong>${phaseNames[game.phase]}</strong>
+    ${phaseDesc[game.phase]}
+  `;
+  
+  renderActionButtons();
+}
+
+function renderActionButtons(){
+  const btns = document.getElementById('actionButtons');
+  btns.innerHTML = '';
+  const p = game.players[game.currentPlayer];
+  
+  if(p.type === 'ai'){
+    btns.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-muted);font-style:italic;">La IA está pensando...</div>';
+    return;
+  }
+  
+  if(game.phase === 'resources'){
+    // Only show "continue" button
+    const btn = document.createElement('button');
+    btn.className = 'action-btn end-turn';
+    btn.innerHTML = 'Continuar a Reclutamiento →';
+    btn.onclick = ()=>nextPhase();
+    btns.appendChild(btn);
+  }
+  else if(game.phase === 'recruit'){
+    const options = [
+      {key:'soldier', label:'Reclutar Soldado', cost:10},
+      {key:'mech', label:'Reclutar Mecánica', cost:30},
+      {key:'miner', label:'Reclutar Recolector', cost:15},
+    ];
+    if(!p.heroSummoned){
+      options.push({key:'hero', label:`Invocar ${p.kingdomData.hero.name}`, cost:60});
+    }
+    options.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.innerHTML = `<span>${opt.label}</span><span class="cost">${opt.cost}💰</span>`;
+      btn.disabled = p.resources < opt.cost || !hasCastleSpace(p);
+      btn.onclick = ()=>recruit(opt.key);
+      btns.appendChild(btn);
+    });
+    const endBtn = document.createElement('button');
+    endBtn.className = 'action-btn end-turn';
+    endBtn.innerHTML = 'Continuar a Movimiento →';
+    endBtn.onclick = ()=>nextPhase();
+    btns.appendChild(endBtn);
+  }
+  else if(game.phase === 'move'){
+    const endBtn = document.createElement('button');
+    endBtn.className = 'action-btn end-turn';
+    endBtn.innerHTML = 'Terminar turno';
+    endBtn.onclick = ()=>endTurn();
+    btns.appendChild(endBtn);
+  }
+}
+
+// ----- PHASE FLOW -----
+function startTurn(){
+  const p = game.players[game.currentPlayer];
+  if(p.eliminated){
+    game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
+    startTurn();
+    return;
+  }
+  
+  // Reset units moved status
+  p.units.forEach(u=>u.moved = false);
+  
+  // Start resources phase
+  game.phase = 'resources';
+  resolveResourcePhase();
+}
+
+function resolveResourcePhase(){
+  const p = game.players[game.currentPlayer];
+  // Income from mines owned by player's units standing on them
+  let income = 15; // base income
+  let minesOwned = 0;
+  p.units.forEach(u=>{
+    if(u.type==='miner'){
+      const cell = getCell(u.r, u.c);
+      if(cell && cell.type==='mine'){
+        income += 12;
+        minesOwned++;
+      } else {
+        income += 3; // small bonus for just being a miner
+      }
+    }
+  });
+  p.resources += income;
+  
+  renderAll();
+  showMessage(`+${income} recursos (${minesOwned} mina${minesOwned!==1?'s':''} activa${minesOwned!==1?'s':''})`);
+  
+  if(p.type === 'ai'){
+    setTimeout(()=>{
+      nextPhase();
+    }, 900);
+  }
+}
+
+function nextPhase(){
+  const p = game.players[game.currentPlayer];
+  clearSelection();
+  
+  if(game.phase === 'resources'){
+    game.phase = 'recruit';
+    renderAll();
+    if(p.type === 'ai') setTimeout(aiRecruit, 700);
+  } else if(game.phase === 'recruit'){
+    game.phase = 'move';
+    // Roll movement die
+    rollMovementDice(()=>{
+      renderAll();
+      if(p.type === 'ai') setTimeout(aiMove, 700);
+    });
+  } else if(game.phase === 'move'){
+    endTurn();
+  }
+}
+
+function rollMovementDice(callback){
+  showDice('d6', 6, (result)=>{
+    const p = game.players[game.currentPlayer];
+    let bonus = 0;
+    // +1 move per unit owned (cap 3)
+    game.moveDiceRemaining = result + Math.min(3, Math.floor(p.units.length/2));
+    setTimeout(callback, 400);
+  });
+}
+
+function endTurn(){
+  clearSelection();
+  game.currentPlayer = (game.currentPlayer + 1) % game.players.length;
+  if(game.currentPlayer === 0) game.turn++;
+  
+  // Check victory
+  checkVictory();
+  if(game.gameOver) return;
+  
+  startTurn();
+}
+
+function checkVictory(){
+  const alive = game.players.filter(p=>!p.eliminated);
+  if(alive.length === 1 && game.grialTaken){
+    triggerWinner(alive[0]);
+  } else if(alive.length === 1){
+    // Only one left, they win by conquest
+    triggerWinner(alive[0]);
+  }
+}
+
+function triggerWinner(player){
+  game.gameOver = true;
+  document.documentElement.style.setProperty('--win-color', player.kingdomData.color);
+  document.getElementById('winnerSymbol').textContent = player.kingdomData.symbol;
+  document.getElementById('winnerTitle').textContent = '¡Victoria!';
+  document.getElementById('winnerName').innerHTML = `${player.name} · ${player.kingdomData.name}`;
+  document.getElementById('winnerText').textContent = 'Los otros reinos han caído. La profecía del Grial aguarda ser cumplida... pero eso será otra batalla.';
+  showScreen('winner');
+}
+
+// ----- RECRUIT -----
+function hasCastleSpace(player){
+  const adj = getAdjacent(player.castle.r, player.castle.c);
+  return adj.some(c=>!c.unit && c.type!=='castle' && c.type!=='grial');
+}
+
+function recruit(key){
+  const p = game.players[game.currentPlayer];
+  let newUnit;
+  let cost;
+  if(key === 'hero'){
+    if(p.heroSummoned) return;
+    newUnit = createHero(game.currentPlayer);
+    cost = 60;
+    p.heroSummoned = true;
+  } else {
+    newUnit = createUnit(key, game.currentPlayer);
+    cost = UNIT_TYPES[key].cost;
+  }
+  if(p.resources < cost) return;
+  
+  // Find empty adjacent cell to castle
+  const adj = getAdjacent(p.castle.r, p.castle.c).filter(c=>!c.unit && c.type!=='castle' && c.type!=='grial');
+  if(adj.length === 0){
+    showMessage('No hay espacio junto al castillo');
+    return;
+  }
+  const cell = adj[0];
+  newUnit.r = cell.r; newUnit.c = cell.c;
+  cell.unit = newUnit;
+  p.units.push(newUnit);
+  p.resources -= cost;
+  
+  showMessage(`${newUnit.name} reclutado`);
+  renderAll();
+}
+
+// ----- MOVEMENT & SELECTION -----
+function clearSelection(){
+  game.selectedCell = null;
+  game.movableCells = [];
+  game.attackableCells = [];
+  document.getElementById('selectedUnit').innerHTML = 'Ninguna unidad seleccionada';
+}
+
+function onCellClick(cell){
+  if(game.gameOver) return;
+  const p = game.players[game.currentPlayer];
+  if(p.type === 'ai') return;
+  if(game.phase !== 'move') return;
+  
+  // Click on own unit - select
+  if(cell.unit && cell.unit.owner === game.currentPlayer){
+    selectUnit(cell);
+    return;
+  }
+  
+  // Click on movable cell - move there
+  if(game.selectedCell && game.movableCells.some(m=>m.r===cell.r && m.c===cell.c)){
+    moveUnit(game.selectedCell, cell);
+    return;
+  }
+  
+  // Click on attackable cell - attack
+  if(game.selectedCell && game.attackableCells.some(m=>m.r===cell.r && m.c===cell.c)){
+    initiateCombat(game.selectedCell, cell);
+    return;
+  }
+  
+  clearSelection();
+  renderBoard();
+}
+
+function selectUnit(cell){
+  const unit = cell.unit;
+  if(unit.moved && unit.type !== 'miner'){
+    showMessage('Esta unidad ya se movió este turno');
+    return;
+  }
+  if(game.moveDiceRemaining <= 0 && unit.type !== 'miner'){
+    showMessage('Sin movimiento restante');
+    return;
+  }
+  
+  game.selectedCell = cell;
+  game.movableCells = [];
+  game.attackableCells = [];
+  
+  // Get adjacent cells
+  const adj = getAdjacent(cell.r, cell.c);
+  adj.forEach(ac=>{
+    if(ac.unit){
+      if(ac.unit.owner !== game.currentPlayer){
+        // Enemy - attackable
+        game.attackableCells.push(ac);
+      }
+    } else if(ac.type === 'castle' && ac.castleOwner !== game.currentPlayer){
+      // Enemy castle - attackable
+      game.attackableCells.push(ac);
+    } else if(ac.type !== 'castle' || ac.castleOwner === game.currentPlayer){
+      // Empty, movable
+      game.movableCells.push(ac);
+    }
+  });
+  
+  // Update UI
+  const info = document.getElementById('selectedUnit');
+  info.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+      <span style="font-size:1.4rem">${unit.emoji}</span>
+      <strong style="color:var(--text)">${unit.name}</strong>
+    </div>
+    <div style="font-size:0.75rem;line-height:1.7;">
+      PV: <b style="color:${unit.hp/unit.maxHp > 0.5 ? 'var(--success)' : 'var(--danger)'}">${unit.hp}/${unit.maxHp}</b><br>
+      ATK: <b>${unit.atk}</b> · DEF: <b>${unit.def}</b>
+      ${unit.isHero ? `<br>Energía: <b style="color:var(--gold)">${unit.energy}/${unit.maxEnergy}</b>` : ''}
+    </div>
+  `;
+  
+  renderBoard();
+}
+
+function moveUnit(fromCell, toCell){
+  const unit = fromCell.unit;
+  fromCell.unit = null;
+  toCell.unit = unit;
+  unit.r = toCell.r; unit.c = toCell.c;
+  unit.moved = true;
+  game.moveDiceRemaining--;
+  
+  // Check if trap/effect triggers
+  if(toCell.type === 'grial' && !game.grialTaken){
+    game.grialTaken = true;
+    showMessage('⚔ ¡Has tocado el Grial Eterno! ⚔');
+    setTimeout(()=>{
+      triggerWinner(game.players[game.currentPlayer]);
+    }, 1500);
+    return;
+  }
+  
+  clearSelection();
+  renderAll();
+  
+  if(game.moveDiceRemaining <= 0){
+    showMessage('Sin movimientos restantes');
+  }
+}
+
+// ----- COMBAT SYSTEM -----
+let currentCombat = null;
+
+function initiateCombat(attackerCell, defenderCell){
+  const attacker = attackerCell.unit;
+  let defender = defenderCell.unit;
+  let targetCastle = null;
+  
+  // Castle combat
+  if(!defender && defenderCell.type === 'castle'){
+    targetCastle = game.players[defenderCell.castleOwner];
+    // Castle fight - simpler, auto-resolve
+    const dmg = Math.max(1, attacker.atk - 3); // Castle has base DEF 3
+    targetCastle.castle.hp -= dmg;
+    showMessage(`${attacker.name} ataca el castillo: -${dmg} PV`);
+    attacker.moved = true;
+    game.moveDiceRemaining--;
+    if(targetCastle.castle.hp <= 0){
+      eliminatePlayer(targetCastle);
+    }
+    clearSelection();
+    renderAll();
+    return;
+  }
+  
+  if(!defender) return;
+  
+  // Open combat screen
+  currentCombat = {
+    attacker,
+    defender,
+    attackerCell,
+    defenderCell,
+    turn: 'attacker', // who acts now
+    log: []
+  };
+  
+  attacker.moved = true;
+  game.moveDiceRemaining--;
+  
+  showCombatScreen();
+}
+
+function showCombatScreen(){
+  const atk = currentCombat.attacker;
+  const def = currentCombat.defender;
+  const atkOwner = game.players[atk.owner];
+  const defOwner = game.players[def.owner];
+  
+  const combatEl = document.getElementById('combat');
+  // Background based on attacker's kingdom
+  combatEl.className = 'screen bg-' + atkOwner.kingdom;
+  
+  // Player side (attacker)
+  const playerSprite = document.getElementById('playerSprite');
+  playerSprite.innerHTML = `<div class="sprite-bg" style="--sp-color:${atkOwner.kingdomData.color}"><div class="sprite-emoji">${atk.emoji}</div></div>`;
+  playerSprite.className = 'combat-sprite';
+  document.getElementById('playerName').textContent = atk.name;
+  document.getElementById('playerName').style.setProperty('--ncolor', atkOwner.kingdomData.color);
+  document.getElementById('playerName').style.color = atkOwner.kingdomData.color;
+  document.getElementById('playerType').textContent = atkOwner.kingdomData.name;
+  document.getElementById('playerAtk').textContent = atk.atk;
+  document.getElementById('playerDef').textContent = atk.def;
+  
+  // Enemy side (defender)
+  const enemySprite = document.getElementById('enemySprite');
+  enemySprite.innerHTML = `<div class="sprite-bg" style="--sp-color:${defOwner.kingdomData.color}"><div class="sprite-emoji">${def.emoji}</div></div>`;
+  enemySprite.className = 'combat-sprite';
+  document.getElementById('enemyName').textContent = def.name;
+  document.getElementById('enemyName').style.color = defOwner.kingdomData.color;
+  document.getElementById('enemyType').textContent = defOwner.kingdomData.name;
+  document.getElementById('enemyAtk').textContent = def.atk;
+  document.getElementById('enemyDef').textContent = def.def;
+  
+  updateCombatHP();
+  document.getElementById('combatLog').textContent = `¡${atk.name} se enfrenta a ${def.name}!`;
+  
+  showScreen('combat');
+  setTimeout(()=>renderCombatActions(), 500);
+}
+
+function updateCombatHP(){
+  const atk = currentCombat.attacker;
+  const def = currentCombat.defender;
+  const atkOwner = game.players[atk.owner];
+  const defOwner = game.players[def.owner];
+  
+  const playerFill = document.getElementById('playerHpFill');
+  playerFill.style.width = Math.max(0, (atk.hp/atk.maxHp)*100) + '%';
+  playerFill.style.background = atkOwner.kingdomData.color;
+  document.getElementById('playerHpText').textContent = `${Math.max(0,atk.hp)}/${atk.maxHp}`;
+  
+  const enemyFill = document.getElementById('enemyHpFill');
+  enemyFill.style.width = Math.max(0, (def.hp/def.maxHp)*100) + '%';
+  enemyFill.style.background = defOwner.kingdomData.color;
+  document.getElementById('enemyHpText').textContent = `${Math.max(0,def.hp)}/${def.maxHp}`;
+}
+
+function renderCombatActions(){
+  const acts = document.getElementById('combatActions');
+  acts.innerHTML = '';
+  
+  const atk = currentCombat.attacker;
+  const atkPlayer = game.players[atk.owner];
+  
+  if(atkPlayer.type === 'ai'){
+    acts.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--text-muted);font-style:italic;">La IA está atacando...</div>';
+    setTimeout(()=>aiCombatAction(), 800);
+    return;
+  }
+  
+  const basicAtk = document.createElement('button');
+  basicAtk.className = 'combat-action';
+  basicAtk.innerHTML = `Atacar<span class="sub">Golpe básico · ATK+D8</span>`;
+  basicAtk.onclick = ()=>combatAttack('basic');
+  acts.appendChild(basicAtk);
+  
+  const heavyAtk = document.createElement('button');
+  heavyAtk.className = 'combat-action';
+  heavyAtk.innerHTML = `Ataque fuerte<span class="sub">+4 ATK, menor precisión</span>`;
+  heavyAtk.onclick = ()=>combatAttack('heavy');
+  acts.appendChild(heavyAtk);
+  
+  const defend = document.createElement('button');
+  defend.className = 'combat-action';
+  defend.innerHTML = `Defender<span class="sub">+4 DEF este golpe</span>`;
+  defend.onclick = ()=>combatAttack('defend');
+  acts.appendChild(defend);
+  
+  if(atk.isHero && atk.energy >= atk.powerCost){
+    const power = document.createElement('button');
+    power.className = 'combat-action';
+    power.innerHTML = `${atk.power}<span class="sub">${atk.powerDesc}</span>`;
+    power.onclick = ()=>combatAttack('power');
+    acts.appendChild(power);
+  } else {
+    const flee = document.createElement('button');
+    flee.className = 'combat-action';
+    flee.innerHTML = `Huir<span class="sub">50% de éxito</span>`;
+    flee.onclick = ()=>combatFlee();
+    acts.appendChild(flee);
+  }
+}
+
+function combatAttack(mode){
+  const atk = currentCombat.attacker;
+  const def = currentCombat.defender;
+  
+  // Build attack damage
+  let atkRoll = Math.floor(Math.random()*8) + 1;
+  let atkPower = atk.atk + atkRoll;
+  let defBonus = 0;
+  let statusMsg = '';
+  
+  if(mode === 'heavy'){
+    if(Math.random() < 0.3){
+      statusMsg = `${atk.name} falla el golpe fuerte!`;
+      atkPower = 0;
+    } else {
+      atkPower += 4;
+      statusMsg = `${atk.name} conecta un golpe fuerte!`;
+    }
+  } else if(mode === 'defend'){
+    currentCombat.defendingPlayer = true;
+    statusMsg = `${atk.name} se prepara para defenderse.`;
+    atkPower = 0;
+  } else if(mode === 'power'){
+    if(atk.power === 'Precognición'){
+      atkPower += 2; statusMsg = `${atk.name} anticipa y golpea certero!`;
+    } else if(atk.power === 'Blindaje Activo'){
+      currentCombat.blindaje = 6;
+      statusMsg = `${atk.name} activa el Blindaje!`;
+      atkPower = 0;
+    } else if(atk.power === 'Niebla Vital'){
+      atk.hp = Math.min(atk.maxHp, atk.hp + 8);
+      statusMsg = `${atk.name} recupera 8 PV con la Niebla!`;
+      atkPower = 0;
+    } else if(atk.power === 'Absorber'){
+      const absorbDmg = 4;
+      def.hp -= absorbDmg;
+      atk.hp = Math.min(atk.maxHp, atk.hp + 4);
+      statusMsg = `${atk.name} absorbe 4 PV de ${def.name}!`;
+      atkPower = 0;
+    }
+    atk.energy -= atk.powerCost;
+  } else {
+    statusMsg = `${atk.name} ataca.`;
+  }
+  
+  // Calc damage if attack power > 0
+  let dmg = 0;
+  if(atkPower > 0){
+    dmg = Math.max(1, atkPower - def.def);
+    def.hp -= dmg;
+  }
+  
+  // Animations
+  document.getElementById('playerSprite').classList.add('attack-lunge');
+  document.getElementById('combatLog').textContent = statusMsg;
+  
+  setTimeout(()=>{
+    document.getElementById('playerSprite').classList.remove('attack-lunge');
+    if(dmg > 0){
+      document.getElementById('enemySprite').classList.add('shake');
+      showDamageNumber('enemySprite', dmg);
+      document.getElementById('combatLog').textContent = `${statusMsg} ${def.name} recibe ${dmg} de daño.`;
+    }
+    updateCombatHP();
+    setTimeout(()=>{
+      document.getElementById('enemySprite').classList.remove('shake');
+      if(def.hp <= 0){
+        endCombat('attacker');
+      } else {
+        // Enemy turn
+        setTimeout(()=>enemyCombatTurn(), 600);
+      }
+    }, 500);
+  }, 400);
+  
+  renderCombatActions(); // disable buttons during animation
+  document.querySelectorAll('.combat-action').forEach(b=>b.disabled=true);
+}
+
+function aiCombatAction(){
+  const atk = currentCombat.attacker;
+  // Simple AI: heavy attack if def is low, else basic, or power if available
+  let mode = 'basic';
+  if(atk.isHero && atk.energy >= atk.powerCost && Math.random() < 0.6){
+    mode = 'power';
+  } else if(Math.random() < 0.3){
+    mode = 'heavy';
+  }
+  combatAttack(mode);
+}
+
+function enemyCombatTurn(){
+  const atk = currentCombat.attacker;
+  const def = currentCombat.defender;
+  
+  // Defender attacks back
+  let defRoll = Math.floor(Math.random()*8) + 1;
+  let defPower = def.atk + defRoll;
+  
+  // Apply blindaje if set
+  let atkDefense = atk.def;
+  if(currentCombat.defendingPlayer){
+    atkDefense += 4;
+    currentCombat.defendingPlayer = false;
+  }
+  if(currentCombat.blindaje){
+    defPower = Math.max(0, defPower - currentCombat.blindaje);
+    currentCombat.blindaje = 0;
+  }
+  
+  let dmg = Math.max(1, defPower - atkDefense);
+  atk.hp -= dmg;
+  
+  document.getElementById('enemySprite').classList.add('enemy-lunge');
+  document.getElementById('combatLog').textContent = `${def.name} contraataca.`;
+  
+  setTimeout(()=>{
+    document.getElementById('enemySprite').classList.remove('enemy-lunge');
+    document.getElementById('playerSprite').classList.add('shake');
+    showDamageNumber('playerSprite', dmg);
+    document.getElementById('combatLog').textContent = `${def.name} golpea a ${atk.name} por ${dmg} de daño.`;
+    updateCombatHP();
+    setTimeout(()=>{
+      document.getElementById('playerSprite').classList.remove('shake');
+      // Regen energy for heroes
+      if(atk.isHero) atk.energy = Math.min(atk.maxEnergy, atk.energy + 1);
+      if(atk.hp <= 0){
+        endCombat('defender');
+      } else {
+        renderCombatActions();
+      }
+    }, 500);
+  }, 400);
+}
+
+function combatFlee(){
+  if(Math.random() < 0.5){
+    document.getElementById('combatLog').textContent = 'Has escapado del combate.';
+    setTimeout(()=>{
+      // Move attacker back - just cancel combat
+      currentCombat = null;
+      showScreen('game');
+      clearSelection();
+      renderAll();
+    }, 1000);
+  } else {
+    document.getElementById('combatLog').textContent = 'Escape fallido. El enemigo te golpea!';
+    document.querySelectorAll('.combat-action').forEach(b=>b.disabled=true);
+    setTimeout(()=>enemyCombatTurn(), 800);
+  }
+}
+
+function endCombat(winner){
+  const atk = currentCombat.attacker;
+  const def = currentCombat.defender;
+  const atkCell = currentCombat.attackerCell;
+  const defCell = currentCombat.defenderCell;
+  
+  if(winner === 'attacker'){
+    document.getElementById('enemySprite').classList.add('defeated');
+    document.getElementById('combatLog').textContent = `¡${def.name} ha sido derrotado!`;
+    
+    // Remove defender from owner's units
+    const defPlayer = game.players[def.owner];
+    defPlayer.units = defPlayer.units.filter(u=>u.id !== def.id);
+    defCell.unit = null;
+    
+    // Move attacker into defender's cell
+    atkCell.unit = null;
+    defCell.unit = atk;
+    atk.r = defCell.r; atk.c = defCell.c;
+    
+    // Reward
+    const atkPlayer = game.players[atk.owner];
+    atkPlayer.resources += 8;
+    
+    // Check if defender's player has no units/castle
+    if(defPlayer.units.length === 0 && defPlayer.castle.hp <= 0){
+      eliminatePlayer(defPlayer);
+    }
+  } else {
+    document.getElementById('playerSprite').classList.add('defeated');
+    document.getElementById('combatLog').textContent = `¡${atk.name} ha caído!`;
+    
+    const atkPlayer = game.players[atk.owner];
+    atkPlayer.units = atkPlayer.units.filter(u=>u.id !== atk.id);
+    atkCell.unit = null;
+    
+    if(atkPlayer.units.length === 0 && atkPlayer.castle.hp <= 0){
+      eliminatePlayer(atkPlayer);
+    }
+  }
+  
+  setTimeout(()=>{
+    currentCombat = null;
+    showScreen('game');
+    clearSelection();
+    renderAll();
+    checkVictory();
+    
+    // Continue AI turn if needed
+    const p = game.players[game.currentPlayer];
+    if(!game.gameOver && p.type === 'ai' && game.phase === 'move'){
+      setTimeout(aiMove, 700);
+    }
+  }, 1700);
+}
+
+function showDamageNumber(spriteId, amount){
+  const sprite = document.getElementById(spriteId);
+  const num = document.createElement('div');
+  num.className = 'damage-number';
+  num.textContent = '-' + amount;
+  num.style.left = '50%';
+  num.style.top = '30%';
+  num.style.transform = 'translateX(-50%)';
+  sprite.appendChild(num);
+  setTimeout(()=>num.remove(), 1000);
+}
+
+// ----- ELIMINATE PLAYER -----
+function eliminatePlayer(player){
+  player.eliminated = true;
+  // Remove all their units
+  player.units.forEach(u=>{
+    const cell = getCell(u.r, u.c);
+    if(cell) cell.unit = null;
+  });
+  player.units = [];
+  // Free castle
+  const castleCell = getCell(player.castle.r, player.castle.c);
+  if(castleCell){
+    castleCell.type = 'normal';
+    delete castleCell.castleOwner;
+  }
+  showMessage(`${player.name} ha sido eliminado del tablero`);
+}
+
+// ----- AI -----
+function aiRecruit(){
+  const p = game.players[game.currentPlayer];
+  // Simple AI: buy soldiers, and miner if resources allow and has few miners
+  const minerCount = p.units.filter(u=>u.type==='miner').length;
+  let bought = false;
+  if(!p.heroSummoned && p.resources >= 60 && game.turn >= 2){
+    recruit('hero');
+    bought = true;
+  } else if(minerCount < 2 && p.resources >= 15){
+    recruit('miner');
+    bought = true;
+  } else if(p.resources >= 30 && Math.random() < 0.4){
+    recruit('mech');
+    bought = true;
+  } else if(p.resources >= 10){
+    recruit('soldier');
+    bought = true;
+  }
+  
+  setTimeout(()=>{
+    if(bought && p.resources >= 10 && hasCastleSpace(p) && Math.random() < 0.3){
+      aiRecruit(); // maybe buy again
+    } else {
+      setTimeout(()=>nextPhase(), 400);
+    }
+  }, 600);
+}
+
+function aiMove(){
+  const p = game.players[game.currentPlayer];
+  
+  if(game.moveDiceRemaining <= 0){
+    setTimeout(()=>endTurn(), 500);
+    return;
+  }
+  
+  // Pick a unit that hasn't moved
+  const availableUnits = p.units.filter(u=>!u.moved);
+  if(availableUnits.length === 0){
+    setTimeout(()=>endTurn(), 500);
+    return;
+  }
+  
+  // For each unit, decide target
+  const unit = availableUnits[0];
+  const cell = getCell(unit.r, unit.c);
+  
+  // Priority:
+  // 1. If adjacent to enemy unit, attack
+  // 2. If adjacent to enemy castle, attack
+  // 3. If adjacent to mine and is miner, stay (move to mine)
+  // 4. Otherwise move toward nearest target
+  
+  const adj = getAdjacent(cell.r, cell.c);
+  
+  // Check for attackable
+  const enemyAdj = adj.find(a => a.unit && a.unit.owner !== p.idx);
+  if(enemyAdj){
+    // Attack
+    game.selectedCell = cell;
+    initiateCombat(cell, enemyAdj);
+    return;
+  }
+  
+  const enemyCastleAdj = adj.find(a => a.type==='castle' && a.castleOwner !== p.idx);
+  if(enemyCastleAdj){
+    game.selectedCell = cell;
+    initiateCombat(cell, enemyCastleAdj);
+    setTimeout(()=>aiMove(), 900);
+    return;
+  }
+  
+  // Miner logic: if miner, go to nearest mine
+  if(unit.type === 'miner'){
+    const mineAdj = adj.find(a=>a.type==='mine' && !a.unit);
+    if(mineAdj && cell.type !== 'mine'){
+      moveUnit(cell, mineAdj);
+      setTimeout(()=>aiMove(), 600);
+      return;
+    }
+    if(cell.type === 'mine'){
+      // Stay on mine
+      unit.moved = true;
+      setTimeout(()=>aiMove(), 300);
+      return;
+    }
+  }
+  
+  // Move toward nearest target (enemy castle or center)
+  const target = findNearestTarget(unit);
+  if(!target){
+    unit.moved = true;
+    setTimeout(()=>aiMove(), 300);
+    return;
+  }
+  
+  // Pick adjacent cell closest to target
+  const moveOptions = adj.filter(a=>!a.unit && (a.type !== 'castle' || a.castleOwner === p.idx));
+  if(moveOptions.length === 0){
+    unit.moved = true;
+    setTimeout(()=>aiMove(), 300);
+    return;
+  }
+  
+  moveOptions.sort((a,b)=>{
+    const da = Math.abs(a.r - target.r) + Math.abs(a.c - target.c);
+    const db = Math.abs(b.r - target.r) + Math.abs(b.c - target.c);
+    return da - db;
+  });
+  
+  moveUnit(cell, moveOptions[0]);
+  setTimeout(()=>aiMove(), 700);
+}
+
+function findNearestTarget(unit){
+  const p = game.players[unit.owner];
+  // Find enemy castles
+  let nearest = null;
+  let bestDist = Infinity;
+  game.players.forEach(other=>{
+    if(other.idx === p.idx || other.eliminated) return;
+    const d = Math.abs(unit.r - other.castle.r) + Math.abs(unit.c - other.castle.c);
+    if(d < bestDist){
+      bestDist = d;
+      nearest = other.castle;
+    }
+  });
+  return nearest;
+}
+
+// ----- DICE OVERLAY -----
+function showDice(type, faces, callback){
+  const overlay = document.getElementById('diceOverlay');
+  const bigDie = document.getElementById('diceBig');
+  const lbl = document.getElementById('diceLabel');
+  const names = {d6:'Dado de Movimiento',d8:'Dado de Combate',d12:'Dado de Evento'};
+  lbl.textContent = names[type] || 'Lanzando...';
+  overlay.classList.add('show');
+  bigDie.classList.add('rolling');
+  
+  let ticks = 0;
+  const interval = setInterval(()=>{
+    bigDie.textContent = Math.floor(Math.random()*faces)+1;
+    ticks++;
+    if(ticks > 12){
+      clearInterval(interval);
+      bigDie.classList.remove('rolling');
+      const result = Math.floor(Math.random()*faces)+1;
+      bigDie.textContent = result;
+      lbl.textContent = `Resultado: ${result}`;
+      setTimeout(()=>{
+        overlay.classList.remove('show');
+        callback(result);
+      }, 900);
+    }
+  }, 90);
+}
+
+// ----- MESSAGES -----
+function showMessage(text, duration=2000){
+  const msg = document.getElementById('messageOverlay');
+  msg.innerHTML = text;
+  msg.style.display = 'block';
+  clearTimeout(msg._t);
+  msg._t = setTimeout(()=>{ msg.style.display = 'none'; }, duration);
+}
+
+// ----- RENDER ALL -----
+function renderAll(){
+  renderBoard();
+  renderPlayers();
+  renderTurnInfo();
+}
+
+// ----- SCREEN MANAGEMENT -----
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showMenu(){ showScreen('menu'); }
+function showSetup(){
+  renderSetupPanel();
+  showScreen('setup');
+}
+
+// ----- SETUP UI -----
+let setupPlayerCount = 3;
+let setupSelections = []; // [{name, kingdom, type}, ...]
+
+function renderSetupPanel(){
+  // Default selections
+  const kingdomKeys = ['vael','drath','eth','ur'];
+  if(setupSelections.length !== setupPlayerCount){
+    setupSelections = [];
+    for(let i=0;i<setupPlayerCount;i++){
+      setupSelections.push({
+        name: `Jugador ${i+1}`,
+        kingdom: kingdomKeys[i],
+        type: i === 0 ? 'human' : 'ai'
+      });
+    }
+  }
+  
+  // Update count buttons
+  document.querySelectorAll('.count-btn').forEach(b=>{
+    b.classList.toggle('active', parseInt(b.dataset.count) === setupPlayerCount);
+  });
+  
+  const slots = document.getElementById('playerSlots');
+  slots.innerHTML = '';
+  for(let i=0;i<setupPlayerCount;i++){
+    const sel = setupSelections[i];
+    const k = KINGDOMS[sel.kingdom];
+    const div = document.createElement('div');
+    div.className = 'k-slot active';
+    div.style.setProperty('--slot-color', k.color);
+    div.innerHTML = `
+      <div class="k-slot-num">${i+1}</div>
+      <div class="k-slot-info">
+        <label>Nombre</label>
+        <input type="text" value="${sel.name}" data-idx="${i}" class="name-input" maxlength="16">
+        <div class="k-slot-type">
+          <button class="type-btn ${sel.type==='human'?'active':''}" data-type="human" data-idx="${i}">Humano</button>
+          <button class="type-btn ${sel.type==='ai'?'active':''}" data-type="ai" data-idx="${i}">IA</button>
+        </div>
+        <div class="k-slot-kingdoms">
+          ${kingdomKeys.map(kk=>{
+            const usedByOther = setupSelections.some((s,si)=>si!==i && s.kingdom===kk);
+            return `<div class="k-pick k-pick-${kk} ${sel.kingdom===kk?'active':''} ${usedByOther?'disabled':''}" data-idx="${i}" data-kingdom="${kk}" title="${KINGDOMS[kk].name}">${KINGDOMS[kk].symbol}</div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    slots.appendChild(div);
+  }
+  
+  // Bind
+  document.querySelectorAll('.name-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const idx = parseInt(e.target.dataset.idx);
+      setupSelections[idx].name = e.target.value || `Jugador ${idx+1}`;
+    });
+  });
+  document.querySelectorAll('.type-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const idx = parseInt(btn.dataset.idx);
+      setupSelections[idx].type = btn.dataset.type;
+      renderSetupPanel();
+    });
+  });
+  document.querySelectorAll('.k-pick').forEach(pick=>{
+    pick.addEventListener('click', e=>{
+      if(pick.classList.contains('disabled')) return;
+      const idx = parseInt(pick.dataset.idx);
+      setupSelections[idx].kingdom = pick.dataset.kingdom;
+      renderSetupPanel();
+    });
+  });
+}
+
+document.querySelectorAll('.count-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    setupPlayerCount = parseInt(b.dataset.count);
+    setupSelections = []; // reset
+    renderSetupPanel();
+  });
+});
+
+function startGame(){
+  game = createGameState(setupSelections);
+  showScreen('game');
+  renderAll();
+  startTurn();
+}
+
+function quickPlay(){
+  setupSelections = [
+    { name: 'Tú', kingdom: 'vael', type: 'human' },
+    { name: 'IA Drath', kingdom: 'drath', type: 'ai' }
+  ];
+  setupPlayerCount = 2;
+  startGame();
+}
+
+// =====================================================
+// ============ TUTORIAL ===============================
+// =====================================================
+const TUTORIAL_STEPS = [
+  {
+    title: 'Bienvenido a Valdris',
+    illu: '✦',
+    content: `<strong>Valdris</strong> es un juego de estrategia por turnos para <strong>2 a 4 jugadores</strong> (contra amigos o la IA).<br><br>Cada jugador controla uno de los 4 <span class="highlight">reinos cósmicos</span>. Tu objetivo: conquistar los castillos enemigos hasta que solo tú sobrevivas, o alcanzar el <strong>Grial Eterno</strong> en el centro del tablero.`
+  },
+  {
+    title: 'Los Cuatro Reinos',
+    illu: '🔮 ⚙️ 🌫️ 💀',
+    content: `Cada reino tiene un <strong>héroe único</strong> con poderes especiales:<br><br>• <span style="color:#7F77DD">🔮 Vael'Khor</span> — psiónicos, precognición<br>• <span style="color:#D85A30">⚙️ Drath'Orn</span> — mecánicos, blindados<br>• <span style="color:#1D9E75">🌫️ Eth'Sylva</span> — nebulosos, regenerativos<br>• <span style="color:#BA7517">💀 Ur'Kaath</span> — devoradores, absorben vida`
+  },
+  {
+    title: 'El Tablero',
+    illu: '◆',
+    content: `El tablero es un <strong>rombo de 25 casillas</strong>. En los 4 extremos están los castillos.<br><br>En el medio hay 4 <strong>minas ⛏</strong> de recursos. En el centro, el <strong>Grial ✦</strong>.<br><br>Cada unidad ocupa una casilla. Para atacar, debe estar <span class="highlight">adyacente al enemigo</span>.`
+  },
+  {
+    title: 'Estructura del Turno',
+    illu: '⏱',
+    content: `Tu turno tiene <strong>3 fases</strong>, en orden:<br><br><strong>1. Recursos 💰</strong> — recibes ingresos (base + minas).<br><strong>2. Reclutamiento ⚔</strong> — compras unidades.<br><strong>3. Movimiento 🎲</strong> — tiras el dado y mueves tus unidades.<br><br>Al terminar, pasa al siguiente jugador.`
+  },
+  {
+    title: 'Reclutar Unidades',
+    illu: '⚔️ 🤖 ⛏️',
+    content: `Puedes comprar desde tu castillo (las unidades aparecen en casillas adyacentes):<br><br>• <strong>Soldado ⚔️</strong> — 10💰 · básico<br>• <strong>Mecánica 🤖</strong> — 30💰 · resistente<br>• <strong>Recolector ⛏️</strong> — 15💰 · genera recursos en minas<br>• <strong>Héroe 🧙</strong> — 60💰 · <span style="color:var(--gold)">solo 1 por partida</span>, con poderes únicos`
+  },
+  {
+    title: 'Mineros y Economía',
+    illu: '⛏️ → 💰',
+    content: `Los <strong>Recolectores</strong> son clave. Envíalos a una <span class="highlight">casilla de mina ⛏</span> y generarán <strong>+12 recursos/turno</strong> mientras estén ahí.<br><br>Cuantas más minas controles, más tropas podrás comprar. <strong>La guerra se gana con economía</strong>.`
+  },
+  {
+    title: 'Movimiento y Dados',
+    illu: '🎲',
+    content: `Al inicio de la fase de movimiento, tiras un <strong>D6</strong> (dado de 6 caras). El resultado + bonus por unidades = puntos de movimiento totales.<br><br>Puedes mover cualquier unidad 1 casilla por cada punto, repartidos como quieras.<br><br>Clic en tu unidad → verás en <span style="color:var(--success)">verde</span> dónde puede ir, en <span style="color:var(--danger)">rojo</span> qué puede atacar.`
+  },
+  {
+    title: 'Combate tipo Pokémon',
+    illu: '⚔️ 💥',
+    content: `Cuando atacas, se abre una <strong>pantalla de combate</strong> con menú:<br><br>• <strong>Atacar</strong> — golpe básico (ATK + D8 vs DEF)<br>• <strong>Ataque fuerte</strong> — +4 ATK pero puede fallar<br>• <strong>Defender</strong> — +4 DEF al próximo golpe<br>• <strong>Poder especial</strong> (solo héroes, cuesta energía)<br>• <strong>Huir</strong> — 50% de éxito<br><br>El combate dura hasta que uno muere o huye.`
+  },
+  {
+    title: 'Cómo Ganar',
+    illu: '👑',
+    content: `Hay dos caminos a la victoria:<br><br><strong>1. Conquista ⚔</strong> — destruye los castillos enemigos (40 PV cada uno). El último en pie gana.<br><br><strong>2. El Grial ✦</strong> — mueve una unidad hasta el centro del tablero. Quien toque el Grial activa el final.<br><br>¡Ahora ve y conquista Valdris! 🔥`
+  }
+];
+
+let tutStep = 0;
+function startTutorial(){
+  tutStep = 0;
+  renderTutorialStep();
+  showScreen('tutorial');
+}
+function renderTutorialStep(){
+  const s = TUTORIAL_STEPS[tutStep];
+  document.getElementById('tutStepNum').textContent = tutStep+1;
+  document.getElementById('tutStepTotal').textContent = TUTORIAL_STEPS.length;
+  document.getElementById('tutTitle').textContent = s.title;
+  document.getElementById('tutIllustration').innerHTML = s.illu;
+  document.getElementById('tutContent').innerHTML = s.content;
+  
+  // Dots
+  const dots = document.getElementById('tutDots');
+  dots.innerHTML = '';
+  for(let i=0;i<TUTORIAL_STEPS.length;i++){
+    const d = document.createElement('div');
+    d.className = 'tut-dot' + (i===tutStep?' active':'');
+    dots.appendChild(d);
+  }
+  
+  document.getElementById('tutNext').textContent = tutStep === TUTORIAL_STEPS.length - 1 ? 'Empezar a jugar ⚔' : 'Siguiente →';
+}
+function tutorialNext(){
+  if(tutStep < TUTORIAL_STEPS.length - 1){
+    tutStep++;
+    renderTutorialStep();
+  } else {
+    // Start a quick play by default
+    quickPlay();
+  }
+}
+function skipTutorial(){
+  showMenu();
+}
+
+// =====================================================
+// ============ INIT ===================================
+// =====================================================
+(function initStars(){
+  const container = document.getElementById('stars');
+  for(let i=0;i<100;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random()*2 + 0.4;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
+    container.appendChild(s);
+  }
+})();
+
+// Initial setup render
+renderSetupPanel();
+</script>
+</body>
+</html>
