@@ -218,6 +218,9 @@ strong{color:var(--gold-light);}
 .action-btn .cost{font-size:0.7rem;color:var(--gold);}
 .action-btn.end-turn{border-color:var(--gold);background:rgba(201,168,76,0.1);color:var(--gold);margin-top:0.8rem;justify-content:center;}
 .action-btn.end-turn:hover:not(:disabled){background:var(--gold);color:var(--bg);}
+.game-quick-controls{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem;}
+.game-quick-btn{padding:0.65rem 0.8rem;border:1px solid var(--border);background:rgba(255,255,255,0.02);color:var(--text-muted);font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;}
+.game-quick-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08);}
 .dice-readout{
   margin-top:1rem;padding:0.8rem;border:1px solid var(--border);background:rgba(255,255,255,0.02);
   font-size:0.85rem;text-align:center;min-height:56px;line-height:1.4;
@@ -668,8 +671,67 @@ const CELL_GAP = 4;
 
 // ----- GAME STATE -----
 let game = null;
+let lastNonTutorialScreen = 'menu';
+let aiTimer = null;
+let aiActionToken = 0;
+let tutorialReturnMode = 'menu';
+let tutorialWasInGame = false;
 let unitIdCounter = 0;
 let currentCombat = null;
+
+function clearAITimer(){
+  if(aiTimer){
+    clearTimeout(aiTimer);
+    aiTimer = null;
+  }
+}
+
+function queueAIAction(fn, delay=250){
+  clearAITimer();
+  const token = ++aiActionToken;
+  aiTimer = setTimeout(()=>{
+    if(token !== aiActionToken) return;
+    if(!canAIAct()) return;
+    fn();
+  }, delay);
+}
+
+function canAIAct(){
+  if(!game || game.gameOver) return false;
+  const activeScreen = document.querySelector('.screen.active');
+  if(!activeScreen || activeScreen.id !== 'game') return false;
+  if(document.getElementById('tutorial')?.classList.contains('active')) return false;
+  if(document.getElementById('diceOverlay')?.classList.contains('show')) return false;
+  if(document.getElementById('combat')?.classList.contains('active')) return false;
+  const p = game.players?.[game.currentPlayer];
+  return !!p && p.type === 'ai';
+}
+
+function maybeRunAI(delay=220){
+  if(!canAIAct()) return;
+  const p = game.players[game.currentPlayer];
+  if(game.phase === 'resources') queueAIAction(()=>nextPhase(), delay);
+  else if(game.phase === 'recruit') queueAIAction(aiRecruit, delay);
+  else if(game.phase === 'move') queueAIAction(aiMove, delay);
+}
+
+function queueAICombatAction(fn, delay=250){
+  clearAITimer();
+  const token = ++aiActionToken;
+  aiTimer = setTimeout(()=>{
+    if(token !== aiActionToken) return;
+    if(!currentCombat || !document.getElementById('combat')?.classList.contains('active')) return;
+    const atk = currentCombat.attacker;
+    const owner = atk ? game.players?.[atk.owner] : null;
+    if(!owner || owner.type !== 'ai') return;
+    fn();
+  }, delay);
+}
+
+function cancelGameFlow(){
+  clearAITimer();
+  aiActionToken++;
+}
 
 function createGameState(playerConfigs){
   const state = {
@@ -1224,7 +1286,7 @@ function resolveResourcePhase(){
   showMessage(`💰 ${breakdown}`, 2400);
 
   if(p.type === 'ai'){
-    setTimeout(()=>nextPhase(), 900);
+    queueAIAction(()=>nextPhase(), 900);
   }
 }
 
@@ -1235,12 +1297,12 @@ function nextPhase(){
   if(game.phase === 'resources'){
     game.phase = 'recruit';
     renderAll();
-    if(p.type === 'ai') setTimeout(aiRecruit, 650);
+    if(p.type === 'ai') queueAIAction(aiRecruit, 650);
   } else if(game.phase === 'recruit'){
     game.phase = 'move';
     rollMovementDice(()=>{
       renderAll();
-      if(p.type === 'ai') setTimeout(aiMove, 700);
+      if(p.type === 'ai') queueAIAction(aiMove, 700);
     });
   } else if(game.phase === 'move'){
     endTurn();
@@ -1546,6 +1608,7 @@ function showCombatScreen(){
   updateCombatHP();
   document.getElementById('combatRound').textContent = currentCombat.round;
   document.getElementById('combatLog').textContent = `¡${atk.name} se enfrenta a ${def.name}!`;
+  cancelGameFlow();
   showScreen('combat');
   setTimeout(renderCombatActions, 250);
 }
@@ -1577,7 +1640,7 @@ function renderCombatActions(){
 
   if(atkPlayer.type === 'ai'){
     acts.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--text-muted);font-style:italic;">La IA está atacando...</div>';
-    setTimeout(aiCombatAction, 650);
+    queueAICombatAction(aiCombatAction, 650);
     return;
   }
 
@@ -1717,6 +1780,7 @@ function disableCombatButtons(){
 }
 
 function aiCombatAction(){
+  if(!currentCombat) return;
   const atk = currentCombat.attacker;
   let mode = 'basic';
   if(atk.isHero && atk.energy >= atk.powerCost && Math.random() < 0.45) mode = 'power';
@@ -1787,6 +1851,7 @@ function combatFlee(){
       showScreen('game');
       clearSelection();
       renderAll();
+      maybeRunAI();
     }, 900);
   } else {
     document.getElementById('combatLog').textContent = 'Escape fallido. El enemigo te golpea.';
@@ -1836,7 +1901,7 @@ function endCombat(winner){
 
     const p = game.players[game.currentPlayer];
     if(!game.gameOver && p.type === 'ai' && game.phase === 'move'){
-      setTimeout(aiMove, 650);
+      queueAIAction(aiMove, 650);
     }
   }, 1300);
 }
@@ -1871,6 +1936,7 @@ function eliminatePlayer(player){
 
 // ----- AI -----
 function aiRecruit(){
+  if(!canAIAct()) return;
   const p = game.players[game.currentPlayer];
   const minerCount = p.units.filter(u=>u.type === 'miner').length;
   let bought = false;
@@ -1889,7 +1955,7 @@ function aiRecruit(){
     bought = true;
   }
 
-  setTimeout(()=>{
+  queueAIAction(()=>{
     if(bought && p.resources >= 10 && hasCastleSpace(p) && Math.random() < 0.25){
       aiRecruit();
     } else {
@@ -1899,6 +1965,7 @@ function aiRecruit(){
 }
 
 function aiMove(){
+  if(!canAIAct()) return;
   const p = game.players[game.currentPlayer];
   if(game.moveDiceRemaining <= 0){
     endTurn();
@@ -1933,12 +2000,12 @@ function aiMove(){
     const mineAdj = adj.find(a => a.type === 'mine' && !a.unit);
     if(mineAdj && cell.type !== 'mine'){
       moveUnit(cell, mineAdj);
-      setTimeout(aiMove, 300);
+      queueAIAction(aiMove, 300);
       return;
     }
     if(cell.type === 'mine'){
       unit.moved = true;
-      setTimeout(aiMove, 200);
+      queueAIAction(aiMove, 200);
       return;
     }
   }
@@ -1947,7 +2014,7 @@ function aiMove(){
   const moveOptions = adj.filter(a => !a.unit && ((a.type !== 'castle' || a.castleOwner === p.idx) && (a.type !== 'grial' || canTouchGrialNow())));
   if(!target || moveOptions.length === 0){
     unit.moved = true;
-    setTimeout(aiMove, 200);
+    queueAIAction(aiMove, 200);
     return;
   }
 
@@ -1958,7 +2025,7 @@ function aiMove(){
   });
 
   moveUnit(cell, moveOptions[0]);
-  setTimeout(aiMove, 340);
+  queueAIAction(aiMove, 340);
 }
 
 function canTouchGrialNow(){
@@ -2050,10 +2117,16 @@ function renderAll(){
 // ----- SCREEN MANAGEMENT -----
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+  if(id !== 'tutorial') lastNonTutorialScreen = id;
 }
-function showMenu(){ showScreen('menu'); }
+function showMenu(){
+  cancelGameFlow();
+  showScreen('menu');
+}
 function showSetup(){
+  cancelGameFlow();
   renderSetupPanel();
   showScreen('setup');
 }
@@ -2141,6 +2214,7 @@ document.querySelectorAll('.count-btn').forEach(b=>{
 });
 
 function startGame(){
+  cancelGameFlow();
   game = createGameState(setupSelections);
   showScreen('game');
   renderAll();
@@ -2148,12 +2222,28 @@ function startGame(){
 }
 
 function quickPlay(){
+  cancelGameFlow();
   setupSelections = [
     { name:'Tú', kingdom:'vael', type:'human' },
     { name:'IA Drath', kingdom:'drath', type:'ai' }
   ];
   setupPlayerCount = 2;
   startGame();
+}
+
+function restartCurrentGame(){
+  if(!game) return;
+  cancelGameFlow();
+  const configs = game.players.map(p => ({ name:p.name, kingdom:p.kingdom, type:p.type }));
+  game = createGameState(configs);
+  showScreen('game');
+  renderAll();
+  startTurn();
+}
+
+function returnToMenu(){
+  cancelGameFlow();
+  showMenu();
 }
 
 // ----- TUTORIAL -----
@@ -2222,7 +2312,10 @@ const TUTORIAL_STEPS = [
 
 let tutStep = 0;
 function startTutorial(){
+  cancelGameFlow();
   tutStep = 0;
+  tutorialWasInGame = !!game && lastNonTutorialScreen === 'game';
+  tutorialReturnMode = tutorialWasInGame ? 'resume-game' : 'menu';
   renderTutorialStep();
   showScreen('tutorial');
 }
@@ -2249,10 +2342,19 @@ function tutorialNext(){
     tutStep++;
     renderTutorialStep();
   } else {
-    quickPlay();
+    finishTutorial();
   }
 }
-function skipTutorial(){ showMenu(); }
+function finishTutorial(){
+  if(tutorialReturnMode === 'resume-game' && game){
+    showScreen('game');
+    renderAll();
+    maybeRunAI();
+  } else {
+    showMenu();
+  }
+}
+function skipTutorial(){ finishTutorial(); }
 
 // ----- INIT -----
 (function initStars(){
